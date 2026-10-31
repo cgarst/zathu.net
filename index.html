@@ -182,38 +182,43 @@
               </div>
             </div>
 
-            <!-- Interactive 6-String Jam Fretboard Controls -->
+            <!-- Interactive Scale & Mode Synthesizer Controls -->
             <div class="synth-bar-controls">
               <div class="synth-bar-title">
-                <span><i class="fa-solid fa-guitar" style="color: var(--neon-cyan);"></i> GUITAR STRING SYNTH (CLICK OR KEYS 1-6)</span>
-                <span style="color: var(--neon-emerald); font-size: 0.7rem;">TUNING: EADGBe</span>
+                <span id="synth-scale-heading"><i class="fa-solid fa-music" style="color: var(--neon-cyan);"></i> SCALE SYNTH (KEYS 1-8)</span>
+                
+                <div class="synth-selectors-row">
+                  <label for="synth-root-select" style="font-size: 0.68rem; color: var(--text-dim);">ROOT:</label>
+                  <select id="synth-root-select" class="synth-select" aria-label="Select Root Note">
+                    <option value="A" selected>A</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="G">G</option>
+                    <option value="B">B</option>
+                  </select>
+
+                  <label for="synth-scale-select" style="font-size: 0.68rem; color: var(--text-dim);">SCALE:</label>
+                  <select id="synth-scale-select" class="synth-select" aria-label="Select Scale or Mode">
+                    <option value="minor_pentatonic" selected>Minor Pentatonic</option>
+                    <option value="minor">Natural Minor (Aeolian)</option>
+                    <option value="major">Major (Ionian)</option>
+                    <option value="dorian">Dorian Mode</option>
+                    <option value="mixolydian">Mixolydian Mode</option>
+                    <option value="phrygian">Phrygian Mode</option>
+                    <option value="blues">Blues Scale</option>
+                    <option value="major_pentatonic">Major Pentatonic</option>
+                  </select>
+
+                  <button id="btn-play-scale" class="synth-btn-preview" title="Arpeggiate active scale">
+                    <i class="fa-solid fa-play" style="font-size: 0.6rem;"></i> PLAY
+                  </button>
+                </div>
               </div>
-              <div class="synth-keys-grid">
-                <button class="synth-key" data-freq="82.41" data-key="1" title="Low E (82.4 Hz)">
-                  <span class="synth-note-name">E2</span>
-                  <span class="synth-key-shortcut">[1]</span>
-                </button>
-                <button class="synth-key" data-freq="110.0" data-key="2" title="A (110.0 Hz)">
-                  <span class="synth-note-name">A2</span>
-                  <span class="synth-key-shortcut">[2]</span>
-                </button>
-                <button class="synth-key" data-freq="146.83" data-key="3" title="D (146.8 Hz)">
-                  <span class="synth-note-name">D3</span>
-                  <span class="synth-key-shortcut">[3]</span>
-                </button>
-                <button class="synth-key" data-freq="196.0" data-key="4" title="G (196.0 Hz)">
-                  <span class="synth-note-name">G3</span>
-                  <span class="synth-key-shortcut">[4]</span>
-                </button>
-                <button class="synth-key" data-freq="246.94" data-key="5" title="B (246.9 Hz)">
-                  <span class="synth-note-name">B3</span>
-                  <span class="synth-key-shortcut">[5]</span>
-                </button>
-                <button class="synth-key" data-freq="329.63" data-key="6" title="High e (329.6 Hz)">
-                  <span class="synth-note-name">E4</span>
-                  <span class="synth-key-shortcut">[6]</span>
-                </button>
-              </div>
+
+              <!-- Dynamically populated scale keys container -->
+              <div class="synth-keys-grid" id="synth-keys-container"></div>
             </div>
 
           </div>

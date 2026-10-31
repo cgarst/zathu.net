@@ -590,7 +590,7 @@ body.crt-active::after {
   border-color: var(--neon-cyan);
 }
 
-/* Interactive Hardware Jam Fretboard / Mini Synth */
+/* Interactive Hardware Jam Scale Synth */
 .synth-bar-controls {
   padding: 1.25rem;
   background: #0b0f19;
@@ -600,15 +600,61 @@ body.crt-active::after {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--text-muted);
   margin-bottom: 0.85rem;
 }
 
+.synth-selectors-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.synth-select {
+  background: #151c2c;
+  border: 1px solid #25334d;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.synth-select:focus, .synth-select:hover {
+  border-color: var(--neon-cyan);
+  background: #1c273e;
+}
+
+.synth-btn-preview {
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.synth-btn-preview:hover {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
 .synth-keys-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
   gap: 0.4rem;
 }
 
@@ -616,15 +662,16 @@ body.crt-active::after {
   background: #151c2c;
   border: 1px solid #25334d;
   border-radius: var(--radius-sm);
-  padding: 0.75rem 0.2rem;
+  padding: 0.65rem 0.15rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   user-select: none;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
   box-shadow: 0 3px 0 #0d121c;
+  text-align: center;
 }
 
 .synth-key:hover {
@@ -646,9 +693,16 @@ body.crt-active::after {
   color: var(--text-main);
 }
 
+.synth-key-degree {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--neon-cyan);
+  margin-top: 0.1rem;
+}
+
 .synth-key-shortcut {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: var(--text-dim);
   margin-top: 0.15rem;
 }

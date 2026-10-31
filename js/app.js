@@ -11,9 +11,73 @@
     audioEnabled: false,
     crtEnabled: false,
     currentWaveform: 'sine',
+    currentRoot: 'A',
+    currentScale: 'minor_pentatonic',
     commandHistory: [],
     historyIndex: -1,
   };
+
+  // Musical Scales & Modes System
+  const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+  const ROOT_MIDI = {
+    'C': 60,  // C4 (261.63 Hz)
+    'D': 62,  // D4 (293.66 Hz)
+    'E': 52,  // E3 (164.81 Hz)
+    'F': 53,  // F3 (174.61 Hz)
+    'G': 55,  // G3 (196.00 Hz)
+    'A': 57,  // A3 (220.00 Hz)
+    'B': 59   // B3 (246.94 Hz)
+  };
+
+  const SCALES = {
+    'minor_pentatonic': {
+      name: 'Minor Pentatonic',
+      intervals: [0, 3, 5, 7, 10, 12],
+      degrees: ['Root', 'b3', '4th', '5th', 'b7', 'Oct']
+    },
+    'minor': {
+      name: 'Natural Minor (Aeolian)',
+      intervals: [0, 2, 3, 5, 7, 8, 10, 12],
+      degrees: ['Root', '2nd', 'b3', '4th', '5th', 'b6', 'b7', 'Oct']
+    },
+    'major': {
+      name: 'Major (Ionian)',
+      intervals: [0, 2, 4, 5, 7, 9, 11, 12],
+      degrees: ['Root', '2nd', '3rd', '4th', '5th', '6th', '7th', 'Oct']
+    },
+    'dorian': {
+      name: 'Dorian Mode',
+      intervals: [0, 2, 3, 5, 7, 9, 10, 12],
+      degrees: ['Root', '2nd', 'b3', '4th', '5th', '6th', 'b7', 'Oct']
+    },
+    'mixolydian': {
+      name: 'Mixolydian Mode',
+      intervals: [0, 2, 4, 5, 7, 9, 10, 12],
+      degrees: ['Root', '2nd', '3rd', '4th', '5th', '6th', 'b7', 'Oct']
+    },
+    'phrygian': {
+      name: 'Phrygian Mode',
+      intervals: [0, 1, 3, 5, 7, 8, 10, 12],
+      degrees: ['Root', 'b2', 'b3', '4th', '5th', 'b6', 'b7', 'Oct']
+    },
+    'blues': {
+      name: 'Blues Scale',
+      intervals: [0, 3, 5, 6, 7, 10, 12],
+      degrees: ['Root', 'b3', '4th', 'b5', '5th', 'b7', 'Oct']
+    },
+    'major_pentatonic': {
+      name: 'Major Pentatonic',
+      intervals: [0, 2, 4, 7, 9, 12],
+      degrees: ['Root', '2nd', '3rd', '5th', '6th', 'Oct']
+    }
+  };
+
+  function getNoteNameFromMidi(midi) {
+    const note = NOTE_NAMES[midi % 12];
+    const octave = Math.floor(midi / 12) - 1;
+    return `${note}${octave}`;
+  }
 
   // Audio Engine State & Nodes
   let audioCtx = null;
@@ -422,51 +486,147 @@
   }
 
   /* ==========================================================================
-     JAM FRETBOARD / KEYBOARD INTERACTION
+     SCALE & MODE SYNTHESIZER
      ========================================================================== */
-  function initJamFretboard() {
-    const keys = document.querySelectorAll('.synth-key');
-    keys.forEach((key) => {
-      const freq = parseFloat(key.getAttribute('data-freq'));
+  function initScaleSynth() {
+    const container = document.getElementById('synth-keys-container');
+    const rootSelect = document.getElementById('synth-root-select');
+    const scaleSelect = document.getElementById('synth-scale-select');
+    const playScaleBtn = document.getElementById('btn-play-scale');
+    const headingEl = document.getElementById('synth-scale-heading');
 
-      key.addEventListener('mousedown', () => {
-        key.classList.add('key-pressed');
-        enableSound();
-        playSynthNote(freq, 0.8);
-      });
+    function renderKeys() {
+      if (!container) return;
+      container.innerHTML = '';
 
-      window.addEventListener('mouseup', () => {
-        key.classList.remove('key-pressed');
-      });
+      const root = state.currentRoot || 'A';
+      const scaleKey = state.currentScale || 'minor_pentatonic';
+      const scale = SCALES[scaleKey] || SCALES['minor_pentatonic'];
+      const baseMidi = ROOT_MIDI[root] || 57;
 
-      // Touch for mobile
-      key.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        key.classList.add('key-pressed');
-        enableSound();
-        playSynthNote(freq, 0.8);
-      });
-      key.addEventListener('touchend', () => {
-        key.classList.remove('key-pressed');
-      });
-    });
+      if (headingEl) {
+        headingEl.innerHTML = `<i class="fa-solid fa-music" style="color: var(--neon-cyan);"></i> ${root} ${scale.name.toUpperCase()} (KEYS 1-${scale.intervals.length})`;
+      }
 
-    // Keyboard Hotkeys 1-6
+      scale.intervals.forEach((interval, index) => {
+        const midi = baseMidi + interval;
+        const freq = 440 * Math.pow(2, (midi - 69) / 12);
+        const noteName = getNoteNameFromMidi(midi);
+        const degree = scale.degrees[index] || '';
+        const shortcut = (index + 1).toString();
+
+        const btn = document.createElement('button');
+        btn.className = 'synth-key';
+        btn.setAttribute('data-freq', freq.toFixed(2));
+        btn.setAttribute('data-key', shortcut);
+        btn.setAttribute('title', `${noteName} (${freq.toFixed(1)} Hz) - ${degree}`);
+
+        btn.innerHTML = `
+          <span class="synth-note-name">${noteName}</span>
+          <span class="synth-key-degree">${degree}</span>
+          <span class="synth-key-shortcut">[${shortcut}]</span>
+        `;
+
+        // Click / Mouse
+        btn.addEventListener('mousedown', () => {
+          btn.classList.add('key-pressed');
+          enableSound();
+          playSynthNote(freq, 0.85);
+        });
+
+        window.addEventListener('mouseup', () => {
+          btn.classList.remove('key-pressed');
+        });
+
+        // Touch for mobile
+        btn.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          btn.classList.add('key-pressed');
+          enableSound();
+          playSynthNote(freq, 0.85);
+        }, { passive: false });
+
+        btn.addEventListener('touchend', () => {
+          btn.classList.remove('key-pressed');
+        });
+
+        container.appendChild(btn);
+      });
+    }
+
+    function arpeggiateScale() {
+      enableSound();
+      if (!container) return;
+      const keys = container.querySelectorAll('.synth-key');
+      keys.forEach((key, idx) => {
+        setTimeout(() => {
+          const freq = parseFloat(key.getAttribute('data-freq'));
+          key.classList.add('key-pressed');
+          playSynthNote(freq, 0.45);
+          setTimeout(() => key.classList.remove('key-pressed'), 250);
+        }, idx * 110);
+      });
+    }
+
+    // Root select listener
+    if (rootSelect) {
+      rootSelect.value = state.currentRoot;
+      rootSelect.addEventListener('change', () => {
+        state.currentRoot = rootSelect.value;
+        renderKeys();
+        arpeggiateScale();
+      });
+    }
+
+    // Scale select listener
+    if (scaleSelect) {
+      scaleSelect.value = state.currentScale;
+      scaleSelect.addEventListener('change', () => {
+        state.currentScale = scaleSelect.value;
+        renderKeys();
+        arpeggiateScale();
+      });
+    }
+
+    // Play button
+    if (playScaleBtn) {
+      playScaleBtn.addEventListener('click', () => {
+        arpeggiateScale();
+      });
+    }
+
+    // Keyboard Hotkeys 1-8
     window.addEventListener('keydown', (e) => {
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
 
       const num = parseInt(e.key, 10);
-      if (num >= 1 && num <= 6) {
-        const keyEl = document.querySelector(`.synth-key[data-key="${num}"]`);
+      if (num >= 1 && num <= 8) {
+        const keyEl = container.querySelector(`.synth-key[data-key="${num}"]`);
         if (keyEl) {
           keyEl.classList.add('key-pressed');
           const freq = parseFloat(keyEl.getAttribute('data-freq'));
           enableSound();
-          playSynthNote(freq, 0.8);
+          playSynthNote(freq, 0.85);
           setTimeout(() => keyEl.classList.remove('key-pressed'), 200);
         }
       }
     });
+
+    // Global hook for terminal commands
+    window.setSynthScale = function (root, scaleKey) {
+      if (root && ROOT_MIDI[root.toUpperCase()]) {
+        state.currentRoot = root.toUpperCase();
+        if (rootSelect) rootSelect.value = state.currentRoot;
+      }
+      if (scaleKey && SCALES[scaleKey.toLowerCase()]) {
+        state.currentScale = scaleKey.toLowerCase();
+        if (scaleSelect) scaleSelect.value = state.currentScale;
+      }
+      renderKeys();
+      arpeggiateScale();
+    };
+
+    renderKeys();
   }
 
   /* ==========================================================================
@@ -1438,7 +1598,30 @@ Oct 30 20:21:05 zathu-box lan-beacon[420]: Subnet broadcast initialized.`
 
         case 'synth': {
           playArpeggio();
-          appendLine(`<span class="term-cyan">&gt; Arpeggiator fired! [C-E-G-C-E-G] Synthesizer output active.</span>`);
+          appendLine(`<span class="term-cyan">&gt; Arpeggiator fired! Synthesizer output active.</span>`);
+          break;
+        }
+
+        case 'scale':
+        case 'mode': {
+          if (args.length >= 2) {
+            const rootArg = args[0].toUpperCase();
+            const modeArg = args[1].toLowerCase();
+            if (window.setSynthScale) {
+              window.setSynthScale(rootArg, modeArg);
+              appendLine(`<span class="term-green">[OK] Synthesizer tuned to ${rootArg} ${modeArg}.</span>`);
+            }
+          } else {
+            appendLine(`
+<span class="term-cyan">=== SYNTHESIZER SCALES &amp; MODES ===</span>
+Active Tuning: <span class="term-green">${state.currentRoot} ${SCALES[state.currentScale].name}</span>
+Available Modes:
+  &bull; <span class="term-green">minor_pentatonic</span> &bull; <span class="term-green">minor</span> (Aeolian)
+  &bull; <span class="term-green">major</span> (Ionian)    &bull; <span class="term-green">dorian</span>
+  &bull; <span class="term-green">mixolydian</span>        &bull; <span class="term-green">phrygian</span>
+  &bull; <span class="term-green">blues</span>             &bull; <span class="term-green">major_pentatonic</span>
+Usage: <span class="term-amber">scale [root] [mode]</span> (e.g. <span class="term-cyan">scale C major</span> or <span class="term-cyan">scale E phrygian</span>)`);
+          }
           break;
         }
 
@@ -1644,7 +1827,7 @@ Live App: <a href="https://setlore.zathu.net/" target="_blank" class="term-cyan"
      ========================================================================== */
   document.addEventListener('DOMContentLoaded', () => {
     initOscilloscope();
-    initJamFretboard();
+    initScaleSynth();
     initHardwareToggles();
     initLanTabs();
     initTerminal();
