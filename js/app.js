@@ -43,6 +43,11 @@
       intervals: [0, 1, 3, 5, 7, 8, 10, 12],
       degrees: ['1 (Root)', 'b2', 'b3', '4th', '5th', 'b6', 'b7', '8 (Oct)']
     },
+    'lydian': {
+      name: 'Lydian (#4)',
+      intervals: [0, 2, 4, 6, 7, 9, 11, 12],
+      degrees: ['1 (Root)', '2nd', '3rd', '#4', '5th', '6th', '7th', '8 (Oct)']
+    },
     'mixolydian': {
       name: 'Mixolydian',
       intervals: [0, 2, 4, 5, 7, 9, 10, 12],
@@ -1700,6 +1705,7 @@ Available Modes:
   &bull; <span class="term-green">minor</span> (Natural Minor / Aeolian)
   &bull; <span class="term-green">dorian</span> (Dorian)
   &bull; <span class="term-green">phrygian</span> (Phrygian)
+  &bull; <span class="term-green">lydian</span> (Lydian - #4)
   &bull; <span class="term-green">mixolydian</span> (Mixolydian)
   &bull; <span class="term-green">major</span> (Major / Ionian)
   &bull; <span class="term-green">blues</span> (Blues Scale)
