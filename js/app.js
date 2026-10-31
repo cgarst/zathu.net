@@ -992,8 +992,9 @@ All repos: https://github.com/cgarst?tab=repositories`
                   owner: 'cgarst',
                   group: 'zathu',
                   date: 'Oct 30 20:04',
-                  size: 340,
-                  content: `Developer: cgarst
+                  size: 380,
+                  content: `Developer: Corey Garst (cgarst)
+LinkedIn:       https://www.linkedin.com/in/coreygarst/
 GitHub Profile: https://github.com/cgarst/
 Repositories:   https://github.com/cgarst?tab=repositories
 Web Apps:       https://majestictab.zathu.net/
@@ -1685,6 +1686,20 @@ Source: <a href="https://github.com/cgarst/MajesticTab" target="_blank" class="t
 Self-hosted live concert & tour setlist analytics.
 Track tour debuts, venue maps, and historical setlist trends.
 Live App: <a href="https://setlore.zathu.net/" target="_blank" class="term-cyan">https://setlore.zathu.net/</a>`);
+          break;
+        }
+
+        case 'linkedin': {
+          window.open('https://www.linkedin.com/in/coreygarst/', '_blank');
+          appendLine(`<span class="term-green">&gt; Opening LinkedIn: <a href="https://www.linkedin.com/in/coreygarst/" target="_blank" class="term-cyan">https://www.linkedin.com/in/coreygarst/</a></span>`);
+          break;
+        }
+
+        case 'contact': {
+          appendLine(`
+<span class="term-cyan">Corey Garst (cgarst)</span>
+&bull; LinkedIn: <a href="https://www.linkedin.com/in/coreygarst/" target="_blank" class="term-green">https://www.linkedin.com/in/coreygarst/</a>
+&bull; GitHub:   <a href="https://github.com/cgarst/" target="_blank" class="term-green">https://github.com/cgarst/</a>`);
           break;
         }
 

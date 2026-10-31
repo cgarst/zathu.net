@@ -14,6 +14,7 @@ Deployed seamlessly under **GitHub Pages**.
 - **[LAN Party Scripts Suite](https://github.com/cgarst?tab=repositories)**: Zero-friction LAN party deployers for Call of Duty 4, COD: World at War, Quake III Arena, and Halo (Project Reclaimer).
 - **[gamestream_launchpad](https://github.com/cgarst/gamestream_launchpad)**: Optimized Moonlight & GameStream launcher environment (390+ stars).
 - **[GitHub Profile](https://github.com/cgarst/)**: Full collection of open-source tools and repositories.
+- **[LinkedIn Profile](https://www.linkedin.com/in/coreygarst/)**: Professional profile and background.
 
 ---
 
