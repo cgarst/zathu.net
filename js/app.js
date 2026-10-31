@@ -521,17 +521,6 @@ def launch():
 
 if __name__ == "__main__":
     launch()`
-                    },
-                    'chiaki-steamdeck.md': {
-                      type: 'file',
-                      perm: 'rw-r--r--',
-                      owner: 'cgarst',
-                      group: 'zathu',
-                      date: 'Oct 30 20:20',
-                      size: 512,
-                      content: `=== CHIAKI STEAM DECK ===
-PlayStation Remote Play automation and integration tailored specifically for Valve Steam Deck.
-Repository: https://github.com/cgarst/chiaki-steamdeck`
                     }
                   }
                 },

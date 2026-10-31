@@ -1243,7 +1243,7 @@ body.crt-active::after {
   color: var(--neon-cyan);
 }
 
-/* Secondary Repos Grid (gamestream, chiaki, syncribullet, etc) */
+/* Secondary Repos Grid (gamestream and repositories) */
 .subrepos-header {
   margin-top: 3.5rem;
   margin-bottom: 1.5rem;
