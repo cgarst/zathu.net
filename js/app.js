@@ -12,7 +12,7 @@
     currentWaveform: 'sine',
     rootNote: 'E',
     rootMidi: 52, // E3 (164.81 Hz)
-    currentMode: 'minor_pentatonic',
+    currentMode: 'minor',
     commandHistory: [],
     historyIndex: -1,
   };
@@ -40,13 +40,8 @@
     'B': 59   // B3 (246.94 Hz)
   };
 
-  // Musical Modes & Scales
+  // Musical Modes & Scales (Ordered: Natural Minor, Harmonic Minor, Minor Pent, Modes, Major)
   const MODES = {
-    'minor_pentatonic': {
-      name: 'Minor Pentatonic',
-      intervals: [0, 3, 5, 7, 10, 12],
-      degrees: ['1 (Root)', 'b3', '4th', '5th', 'b7', '8 (Oct)']
-    },
     'minor': {
       name: 'Natural Minor (Aeolian)',
       intervals: [0, 2, 3, 5, 7, 8, 10, 12],
@@ -56,6 +51,11 @@
       name: 'Harmonic Minor',
       intervals: [0, 2, 3, 5, 7, 8, 11, 12],
       degrees: ['1 (Root)', '2nd', 'b3', '4th', '5th', 'b6', '7th', '8 (Oct)']
+    },
+    'minor_pentatonic': {
+      name: 'Minor Pentatonic',
+      intervals: [0, 3, 5, 7, 10, 12],
+      degrees: ['1 (Root)', 'b3', '4th', '5th', 'b7', '8 (Oct)']
     },
     'dorian': {
       name: 'Dorian',
@@ -81,11 +81,6 @@
       name: 'Major (Ionian)',
       intervals: [0, 2, 4, 5, 7, 9, 11, 12],
       degrees: ['1 (Root)', '2nd', '3rd', '4th', '5th', '6th', '7th', '8 (Oct)']
-    },
-    'blues': {
-      name: 'Blues Scale',
-      intervals: [0, 3, 5, 6, 7, 10, 12],
-      degrees: ['1 (Root)', 'b3', '4th', 'b5', '5th', 'b7', '8 (Oct)']
     }
   };
 
@@ -97,8 +92,8 @@
 
   // Active scale notes helper for the current mode & root
   function getActiveScaleNotes() {
-    const modeKey = state.currentMode || 'minor_pentatonic';
-    const mode = MODES[modeKey] || MODES['minor_pentatonic'];
+    const modeKey = state.currentMode || 'minor';
+    const mode = MODES[modeKey] || MODES['minor'];
     const baseMidi = state.rootMidi || 52; // E3 (164.81 Hz)
 
     return mode.intervals.map((interval, index) => {
@@ -794,8 +789,8 @@
       stopAllNoteVoices();
       container.innerHTML = '';
 
-      const modeKey = state.currentMode || 'minor_pentatonic';
-      const mode = MODES[modeKey] || MODES['minor_pentatonic'];
+      const modeKey = state.currentMode || 'minor';
+      const mode = MODES[modeKey] || MODES['minor'];
       const baseMidi = state.rootMidi || 52; // Default E3 (164.81 Hz)
 
       mode.intervals.forEach((interval, index) => {
@@ -1955,15 +1950,14 @@ Active Tuning: <span class="term-green">Key of ${state.rootNote} &bull; ${MODES[
 Available Keys:
   &bull; <span class="term-green">C</span> &bull; <span class="term-green">C#</span> &bull; <span class="term-green">D</span> &bull; <span class="term-green">D#</span> &bull; <span class="term-green">E</span> &bull; <span class="term-green">F</span> &bull; <span class="term-green">F#</span> &bull; <span class="term-green">G</span> &bull; <span class="term-green">G#</span> &bull; <span class="term-green">A</span> &bull; <span class="term-green">A#</span> &bull; <span class="term-green">B</span>
 Available Modes:
-  &bull; <span class="term-green">minor_pentatonic</span> (Minor Pentatonic)
   &bull; <span class="term-green">minor</span> (Natural Minor / Aeolian)
   &bull; <span class="term-green">harmonic_minor</span> (Harmonic Minor)
+  &bull; <span class="term-green">minor_pentatonic</span> (Minor Pentatonic)
   &bull; <span class="term-green">dorian</span> (Dorian)
   &bull; <span class="term-green">phrygian</span> (Phrygian)
   &bull; <span class="term-green">lydian</span> (Lydian - #4)
   &bull; <span class="term-green">mixolydian</span> (Mixolydian)
   &bull; <span class="term-green">major</span> (Major / Ionian)
-  &bull; <span class="term-green">blues</span> (Blues Scale)
 Usage: <span class="term-amber">scale [key] [mode]</span> (e.g. <span class="term-cyan">scale A harmonic_minor</span> or <span class="term-cyan">mode lydian</span> or <span class="term-cyan">key D</span>)`);
           }
           break;
