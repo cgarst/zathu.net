@@ -11,32 +11,27 @@
     audioEnabled: false,
     crtEnabled: false,
     currentWaveform: 'sine',
-    diatonicStep: 0, // 0=C, 1=D, 2=E, 3=F, 4=G, 5=A, 6=B
-    currentMode: 'ionian',
+    rootNote: 'E',
+    rootMidi: 52, // E3 (164.81 Hz)
+    currentMode: 'minor_pentatonic',
     commandHistory: [],
     historyIndex: -1,
   };
 
-  // C Major Diatonic Scales & Modes System
+  // Key of E Modes & Scales System
   const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-  // 7 Diatonic steps of C Major
-  const DIATONIC_STEPS = [
-    { step: 'I',   note: 'C', baseMidi: 60, defaultMode: 'ionian', name: 'I - C' },
-    { step: 'ii',  note: 'D', baseMidi: 62, defaultMode: 'dorian', name: 'ii - D' },
-    { step: 'iii', note: 'E', baseMidi: 52, defaultMode: 'phrygian', name: 'iii - E' },
-    { step: 'IV',  note: 'F', baseMidi: 53, defaultMode: 'lydian', name: 'IV - F' },
-    { step: 'V',   note: 'G', baseMidi: 55, defaultMode: 'mixolydian', name: 'V - G' },
-    { step: 'vi',  note: 'A', baseMidi: 57, defaultMode: 'aeolian', name: 'vi - A' },
-    { step: 'vii°',note: 'B', baseMidi: 59, defaultMode: 'locrian', name: 'vii° - B' }
-  ];
-
-  // Musical Modes & Scales
+  // Musical Modes & Scales on Root E
   const MODES = {
-    'ionian': {
-      name: 'Ionian (Major)',
-      intervals: [0, 2, 4, 5, 7, 9, 11, 12],
-      degrees: ['1 (Root)', '2nd', '3rd', '4th', '5th', '6th', '7th', '8 (Oct)']
+    'minor_pentatonic': {
+      name: 'Minor Pentatonic',
+      intervals: [0, 3, 5, 7, 10, 12],
+      degrees: ['1 (Root)', 'b3', '4th', '5th', 'b7', '8 (Oct)']
+    },
+    'minor': {
+      name: 'Natural Minor (Aeolian)',
+      intervals: [0, 2, 3, 5, 7, 8, 10, 12],
+      degrees: ['1 (Root)', '2nd', 'b3', '4th', '5th', 'b6', 'b7', '8 (Oct)']
     },
     'dorian': {
       name: 'Dorian',
@@ -48,35 +43,15 @@
       intervals: [0, 1, 3, 5, 7, 8, 10, 12],
       degrees: ['1 (Root)', 'b2', 'b3', '4th', '5th', 'b6', 'b7', '8 (Oct)']
     },
-    'lydian': {
-      name: 'Lydian',
-      intervals: [0, 2, 4, 6, 7, 9, 11, 12],
-      degrees: ['1 (Root)', '2nd', '3rd', '#4', '5th', '6th', '7th', '8 (Oct)']
-    },
     'mixolydian': {
       name: 'Mixolydian',
       intervals: [0, 2, 4, 5, 7, 9, 10, 12],
       degrees: ['1 (Root)', '2nd', '3rd', '4th', '5th', '6th', 'b7', '8 (Oct)']
     },
-    'aeolian': {
-      name: 'Aeolian (Minor)',
-      intervals: [0, 2, 3, 5, 7, 8, 10, 12],
-      degrees: ['1 (Root)', '2nd', 'b3', '4th', '5th', 'b6', 'b7', '8 (Oct)']
-    },
-    'locrian': {
-      name: 'Locrian',
-      intervals: [0, 1, 3, 5, 6, 8, 10, 12],
-      degrees: ['1 (Root)', 'b2', 'b3', '4th', 'b5', 'b6', 'b7', '8 (Oct)']
-    },
-    'minor_pentatonic': {
-      name: 'Minor Pentatonic',
-      intervals: [0, 3, 5, 7, 10, 12],
-      degrees: ['1 (Root)', 'b3', '4th', '5th', 'b7', '8 (Oct)']
-    },
-    'major_pentatonic': {
-      name: 'Major Pentatonic',
-      intervals: [0, 2, 4, 7, 9, 12],
-      degrees: ['1 (Root)', '2nd', '3rd', '5th', '6th', '8 (Oct)']
+    'major': {
+      name: 'Major (Ionian)',
+      intervals: [0, 2, 4, 5, 7, 9, 11, 12],
+      degrees: ['1 (Root)', '2nd', '3rd', '4th', '5th', '6th', '7th', '8 (Oct)']
     },
     'blues': {
       name: 'Blues Scale',
@@ -498,21 +473,19 @@
   }
 
   /* ==========================================================================
-     DIATONIC SCALES (C MAJOR) & MODES SYNTHESIZER
+     KEY OF E MODES & SCALES SYNTHESIZER
      ========================================================================== */
-  function initDiatonicSynth() {
+  function initEModeSynth() {
     const container = document.getElementById('synth-keys-container');
-    const stepBtns = document.querySelectorAll('#diatonic-step-buttons .diatonic-btn');
-    const modeSelect = document.getElementById('synth-mode-select');
+    const modeBtns = document.querySelectorAll('#mode-buttons-group .mode-btn');
 
     function renderNumberButtons() {
       if (!container) return;
       container.innerHTML = '';
 
-      const stepData = DIATONIC_STEPS[state.diatonicStep] || DIATONIC_STEPS[0];
-      const modeKey = state.currentMode || 'ionian';
-      const mode = MODES[modeKey] || MODES['ionian'];
-      const baseMidi = stepData.baseMidi;
+      const modeKey = state.currentMode || 'minor_pentatonic';
+      const mode = MODES[modeKey] || MODES['minor_pentatonic'];
+      const baseMidi = state.rootMidi; // 52 = E3 (164.81 Hz)
 
       mode.intervals.forEach((interval, index) => {
         const midi = baseMidi + interval;
@@ -560,37 +533,22 @@
       });
     }
 
-    // Diatonic step buttons: move through the 7 diatonic scales of C
-    stepBtns.forEach((btn) => {
+    // Mode buttons: switch active mode on E
+    modeBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
         playClickBlip('high');
-        stepBtns.forEach((b) => b.classList.remove('active'));
+        modeBtns.forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
 
-        const stepIndex = parseInt(btn.getAttribute('data-step'), 10);
-        state.diatonicStep = stepIndex;
-
-        // Default mode for this diatonic step
-        const defaultMode = btn.getAttribute('data-mode');
-        if (defaultMode && MODES[defaultMode]) {
-          state.currentMode = defaultMode;
-          if (modeSelect) modeSelect.value = defaultMode;
+        const modeKey = btn.getAttribute('data-mode');
+        if (modeKey && MODES[modeKey]) {
+          state.currentMode = modeKey;
         }
 
         renderNumberButtons();
-        // No automatic playback! User plays via number buttons or keys 1-8.
+        // No automatic playback! Only manual click or keyboard 1-8.
       });
     });
-
-    // Mode dropdown listener (lets user change mode on the current diatonic step)
-    if (modeSelect) {
-      modeSelect.value = state.currentMode;
-      modeSelect.addEventListener('change', () => {
-        playClickBlip('blip');
-        state.currentMode = modeSelect.value;
-        renderNumberButtons();
-      });
-    }
 
     // Keyboard Hotkeys 1-8
     window.addEventListener('keydown', (e) => {
@@ -610,24 +568,18 @@
     });
 
     // Global hook for terminal commands
-    window.setDiatonicScale = function (stepArg, modeArg) {
-      if (typeof stepArg === 'number' && stepArg >= 0 && stepArg <= 6) {
-        state.diatonicStep = stepArg;
-      } else if (typeof stepArg === 'string') {
-        const found = DIATONIC_STEPS.findIndex((s) => s.note.toLowerCase() === stepArg.toLowerCase() || s.step.toLowerCase() === stepArg.toLowerCase());
-        if (found !== -1) state.diatonicStep = found;
-      }
+    window.setEMode = function (modeArg) {
       if (modeArg && MODES[modeArg.toLowerCase()]) {
         state.currentMode = modeArg.toLowerCase();
-      } else {
-        state.currentMode = DIATONIC_STEPS[state.diatonicStep].defaultMode;
       }
 
-      stepBtns.forEach((b, idx) => {
-        if (idx === state.diatonicStep) b.classList.add('active');
-        else b.classList.remove('active');
+      modeBtns.forEach((b) => {
+        if (b.getAttribute('data-mode') === state.currentMode) {
+          b.classList.add('active');
+        } else {
+          b.classList.remove('active');
+        }
       });
-      if (modeSelect) modeSelect.value = state.currentMode;
 
       renderNumberButtons();
     };
@@ -1612,23 +1564,27 @@ Oct 30 20:21:05 zathu-box lan-beacon[420]: Subnet broadcast initialized.`
         case 'scale':
         case 'mode': {
           if (args.length >= 1) {
-            const stepOrMode = args[0];
-            const modeArg = args[1] || null;
-            if (window.setDiatonicScale) {
-              window.setDiatonicScale(stepOrMode, modeArg);
-              const currentStep = DIATONIC_STEPS[state.diatonicStep];
-              appendLine(`<span class="term-green">[OK] Synthesizer tuned to Diatonic Step ${currentStep.name} (${MODES[state.currentMode].name}).</span>`);
+            const modeArg = args[0].toLowerCase();
+            const targetMode = modeArg === 'pentatonic' ? 'minor_pentatonic' : (modeArg === 'aeolian' ? 'minor' : (modeArg === 'ionian' ? 'major' : modeArg));
+            if (window.setEMode && MODES[targetMode]) {
+              window.setEMode(targetMode);
+              appendLine(`<span class="term-green">[OK] Key of E Synthesizer tuned to: ${MODES[state.currentMode].name}.</span>`);
+            } else {
+              appendLine(`<span class="term-red">Unknown mode '${args[0]}'. Available: ${Object.keys(MODES).join(', ')}</span>`);
             }
           } else {
-            const currentStep = DIATONIC_STEPS[state.diatonicStep];
             appendLine(`
-<span class="term-cyan">=== C MAJOR DIATONIC SCALES &amp; MODES ===</span>
-Active Step: <span class="term-green">${currentStep.name} (${MODES[state.currentMode].name})</span>
-Diatonic Steps:
-  &bull; <span class="term-green">C (I)</span> &bull; <span class="term-green">D (ii)</span> &bull; <span class="term-green">E (iii)</span> &bull; <span class="term-green">F (IV)</span> &bull; <span class="term-green">G (V)</span> &bull; <span class="term-green">A (vi)</span> &bull; <span class="term-green">B (vii)</span>
+<span class="term-cyan">=== KEY OF E MODES &amp; SCALES ===</span>
+Active Mode: <span class="term-green">${MODES[state.currentMode].name}</span>
 Available Modes:
-  &bull; <span class="term-green">ionian</span> &bull; <span class="term-green">dorian</span> &bull; <span class="term-green">phrygian</span> &bull; <span class="term-green">lydian</span> &bull; <span class="term-green">mixolydian</span> &bull; <span class="term-green">aeolian</span> &bull; <span class="term-green">locrian</span> &bull; <span class="term-green">blues</span>
-Usage: <span class="term-amber">scale [step] [mode]</span> (e.g. <span class="term-cyan">scale D dorian</span> or <span class="term-cyan">scale G mixolydian</span>)`);
+  &bull; <span class="term-green">minor_pentatonic</span> (Minor Pentatonic)
+  &bull; <span class="term-green">minor</span> (Natural Minor / Aeolian)
+  &bull; <span class="term-green">dorian</span> (Dorian)
+  &bull; <span class="term-green">phrygian</span> (Phrygian)
+  &bull; <span class="term-green">mixolydian</span> (Mixolydian)
+  &bull; <span class="term-green">major</span> (Major / Ionian)
+  &bull; <span class="term-green">blues</span> (Blues Scale)
+Usage: <span class="term-amber">mode [name]</span> (e.g. <span class="term-cyan">mode dorian</span> or <span class="term-cyan">mode minor_pentatonic</span>)`);
           }
           break;
         }
@@ -1849,7 +1805,7 @@ Live App: <a href="https://setlore.zathu.net/" target="_blank" class="term-cyan"
      ========================================================================== */
   document.addEventListener('DOMContentLoaded', () => {
     initOscilloscope();
-    initDiatonicSynth();
+    initEModeSynth();
     initHardwareToggles();
     initLanTabs();
     initTerminal();
