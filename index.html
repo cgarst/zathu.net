@@ -185,42 +185,42 @@
               </div>
             </div>
 
-            <!-- Interactive Scale & Mode Synthesizer Controls -->
+            <!-- Interactive Diatonic Scale Synthesizer Controls -->
             <div class="synth-bar-controls">
-              <div class="synth-bar-title">
-                <span id="synth-scale-heading"><i class="fa-solid fa-music" style="color: var(--neon-cyan);"></i> SCALE SYNTH (KEYS 1-8)</span>
-                
-                <div class="synth-selectors-row">
-                  <label for="synth-root-select" style="font-size: 0.68rem; color: var(--text-dim);">ROOT:</label>
-                  <select id="synth-root-select" class="synth-select" aria-label="Select Root Note">
-                    <option value="A" selected>A</option>
-                    <option value="C">C</option>
-                    <option value="D">D</option>
-                    <option value="E">E</option>
-                    <option value="F">F</option>
-                    <option value="G">G</option>
-                    <option value="B">B</option>
-                  </select>
+              <div class="diatonic-chords-bar">
+                <div class="diatonic-bar-left">
+                  <span class="diatonic-bar-label">
+                    <i class="fa-solid fa-music" style="color: var(--neon-cyan);"></i> C DIATONIC:
+                  </span>
+                  <div class="diatonic-btn-group" id="diatonic-step-buttons">
+                    <button class="diatonic-btn active" data-step="0" data-note="C" data-mode="ionian" title="I - C Ionian (Major)">I &bull; C</button>
+                    <button class="diatonic-btn" data-step="1" data-note="D" data-mode="dorian" title="ii - D Dorian">ii &bull; D</button>
+                    <button class="diatonic-btn" data-step="2" data-note="E" data-mode="phrygian" title="iii - E Phrygian">iii &bull; E</button>
+                    <button class="diatonic-btn" data-step="3" data-note="F" data-mode="lydian" title="IV - F Lydian">IV &bull; F</button>
+                    <button class="diatonic-btn" data-step="4" data-note="G" data-mode="mixolydian" title="V - G Mixolydian">V &bull; G</button>
+                    <button class="diatonic-btn" data-step="5" data-note="A" data-mode="aeolian" title="vi - A Aeolian (Minor)">vi &bull; A</button>
+                    <button class="diatonic-btn" data-step="6" data-note="B" data-mode="locrian" title="vii° - B Locrian">vii&deg; &bull; B</button>
+                  </div>
+                </div>
 
-                  <label for="synth-scale-select" style="font-size: 0.68rem; color: var(--text-dim);">SCALE:</label>
-                  <select id="synth-scale-select" class="synth-select" aria-label="Select Scale or Mode">
-                    <option value="minor_pentatonic" selected>Minor Pentatonic</option>
-                    <option value="minor">Natural Minor (Aeolian)</option>
-                    <option value="major">Major (Ionian)</option>
-                    <option value="dorian">Dorian Mode</option>
-                    <option value="mixolydian">Mixolydian Mode</option>
-                    <option value="phrygian">Phrygian Mode</option>
-                    <option value="blues">Blues Scale</option>
+                <div class="diatonic-bar-right">
+                  <label for="synth-mode-select" class="diatonic-mode-label">MODE:</label>
+                  <select id="synth-mode-select" class="synth-select" aria-label="Select Musical Mode">
+                    <option value="ionian" selected>Ionian (Major)</option>
+                    <option value="dorian">Dorian</option>
+                    <option value="phrygian">Phrygian</option>
+                    <option value="lydian">Lydian</option>
+                    <option value="mixolydian">Mixolydian</option>
+                    <option value="aeolian">Aeolian (Minor)</option>
+                    <option value="locrian">Locrian</option>
+                    <option value="minor_pentatonic">Minor Pentatonic</option>
                     <option value="major_pentatonic">Major Pentatonic</option>
+                    <option value="blues">Blues Scale</option>
                   </select>
-
-                  <button id="btn-play-scale" class="synth-btn-preview" title="Arpeggiate active scale">
-                    <i class="fa-solid fa-play" style="font-size: 0.6rem;"></i> PLAY
-                  </button>
                 </div>
               </div>
 
-              <!-- Dynamically populated scale keys container -->
+              <!-- Interactive Number Buttons [1] through [8] (Click or Keys 1-8) -->
               <div class="synth-keys-grid" id="synth-keys-container"></div>
             </div>
 

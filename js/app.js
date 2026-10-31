@@ -11,65 +11,77 @@
     audioEnabled: false,
     crtEnabled: false,
     currentWaveform: 'sine',
-    currentRoot: 'A',
-    currentScale: 'minor_pentatonic',
+    diatonicStep: 0, // 0=C, 1=D, 2=E, 3=F, 4=G, 5=A, 6=B
+    currentMode: 'ionian',
     commandHistory: [],
     historyIndex: -1,
   };
 
-  // Musical Scales & Modes System
+  // C Major Diatonic Scales & Modes System
   const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-  const ROOT_MIDI = {
-    'C': 60,  // C4 (261.63 Hz)
-    'D': 62,  // D4 (293.66 Hz)
-    'E': 52,  // E3 (164.81 Hz)
-    'F': 53,  // F3 (174.61 Hz)
-    'G': 55,  // G3 (196.00 Hz)
-    'A': 57,  // A3 (220.00 Hz)
-    'B': 59   // B3 (246.94 Hz)
-  };
+  // 7 Diatonic steps of C Major
+  const DIATONIC_STEPS = [
+    { step: 'I',   note: 'C', baseMidi: 60, defaultMode: 'ionian', name: 'I - C' },
+    { step: 'ii',  note: 'D', baseMidi: 62, defaultMode: 'dorian', name: 'ii - D' },
+    { step: 'iii', note: 'E', baseMidi: 52, defaultMode: 'phrygian', name: 'iii - E' },
+    { step: 'IV',  note: 'F', baseMidi: 53, defaultMode: 'lydian', name: 'IV - F' },
+    { step: 'V',   note: 'G', baseMidi: 55, defaultMode: 'mixolydian', name: 'V - G' },
+    { step: 'vi',  note: 'A', baseMidi: 57, defaultMode: 'aeolian', name: 'vi - A' },
+    { step: 'vii°',note: 'B', baseMidi: 59, defaultMode: 'locrian', name: 'vii° - B' }
+  ];
 
-  const SCALES = {
+  // Musical Modes & Scales
+  const MODES = {
+    'ionian': {
+      name: 'Ionian (Major)',
+      intervals: [0, 2, 4, 5, 7, 9, 11, 12],
+      degrees: ['1 (Root)', '2nd', '3rd', '4th', '5th', '6th', '7th', '8 (Oct)']
+    },
+    'dorian': {
+      name: 'Dorian',
+      intervals: [0, 2, 3, 5, 7, 9, 10, 12],
+      degrees: ['1 (Root)', '2nd', 'b3', '4th', '5th', '6th', 'b7', '8 (Oct)']
+    },
+    'phrygian': {
+      name: 'Phrygian',
+      intervals: [0, 1, 3, 5, 7, 8, 10, 12],
+      degrees: ['1 (Root)', 'b2', 'b3', '4th', '5th', 'b6', 'b7', '8 (Oct)']
+    },
+    'lydian': {
+      name: 'Lydian',
+      intervals: [0, 2, 4, 6, 7, 9, 11, 12],
+      degrees: ['1 (Root)', '2nd', '3rd', '#4', '5th', '6th', '7th', '8 (Oct)']
+    },
+    'mixolydian': {
+      name: 'Mixolydian',
+      intervals: [0, 2, 4, 5, 7, 9, 10, 12],
+      degrees: ['1 (Root)', '2nd', '3rd', '4th', '5th', '6th', 'b7', '8 (Oct)']
+    },
+    'aeolian': {
+      name: 'Aeolian (Minor)',
+      intervals: [0, 2, 3, 5, 7, 8, 10, 12],
+      degrees: ['1 (Root)', '2nd', 'b3', '4th', '5th', 'b6', 'b7', '8 (Oct)']
+    },
+    'locrian': {
+      name: 'Locrian',
+      intervals: [0, 1, 3, 5, 6, 8, 10, 12],
+      degrees: ['1 (Root)', 'b2', 'b3', '4th', 'b5', 'b6', 'b7', '8 (Oct)']
+    },
     'minor_pentatonic': {
       name: 'Minor Pentatonic',
       intervals: [0, 3, 5, 7, 10, 12],
-      degrees: ['Root', 'b3', '4th', '5th', 'b7', 'Oct']
-    },
-    'minor': {
-      name: 'Natural Minor (Aeolian)',
-      intervals: [0, 2, 3, 5, 7, 8, 10, 12],
-      degrees: ['Root', '2nd', 'b3', '4th', '5th', 'b6', 'b7', 'Oct']
-    },
-    'major': {
-      name: 'Major (Ionian)',
-      intervals: [0, 2, 4, 5, 7, 9, 11, 12],
-      degrees: ['Root', '2nd', '3rd', '4th', '5th', '6th', '7th', 'Oct']
-    },
-    'dorian': {
-      name: 'Dorian Mode',
-      intervals: [0, 2, 3, 5, 7, 9, 10, 12],
-      degrees: ['Root', '2nd', 'b3', '4th', '5th', '6th', 'b7', 'Oct']
-    },
-    'mixolydian': {
-      name: 'Mixolydian Mode',
-      intervals: [0, 2, 4, 5, 7, 9, 10, 12],
-      degrees: ['Root', '2nd', '3rd', '4th', '5th', '6th', 'b7', 'Oct']
-    },
-    'phrygian': {
-      name: 'Phrygian Mode',
-      intervals: [0, 1, 3, 5, 7, 8, 10, 12],
-      degrees: ['Root', 'b2', 'b3', '4th', '5th', 'b6', 'b7', 'Oct']
-    },
-    'blues': {
-      name: 'Blues Scale',
-      intervals: [0, 3, 5, 6, 7, 10, 12],
-      degrees: ['Root', 'b3', '4th', 'b5', '5th', 'b7', 'Oct']
+      degrees: ['1 (Root)', 'b3', '4th', '5th', 'b7', '8 (Oct)']
     },
     'major_pentatonic': {
       name: 'Major Pentatonic',
       intervals: [0, 2, 4, 7, 9, 12],
-      degrees: ['Root', '2nd', '3rd', '5th', '6th', 'Oct']
+      degrees: ['1 (Root)', '2nd', '3rd', '5th', '6th', '8 (Oct)']
+    },
+    'blues': {
+      name: 'Blues Scale',
+      intervals: [0, 3, 5, 6, 7, 10, 12],
+      degrees: ['1 (Root)', 'b3', '4th', 'b5', '5th', 'b7', '8 (Oct)']
     }
   };
 
@@ -486,37 +498,31 @@
   }
 
   /* ==========================================================================
-     SCALE & MODE SYNTHESIZER
+     DIATONIC SCALES (C MAJOR) & MODES SYNTHESIZER
      ========================================================================== */
-  function initScaleSynth() {
+  function initDiatonicSynth() {
     const container = document.getElementById('synth-keys-container');
-    const rootSelect = document.getElementById('synth-root-select');
-    const scaleSelect = document.getElementById('synth-scale-select');
-    const playScaleBtn = document.getElementById('btn-play-scale');
-    const headingEl = document.getElementById('synth-scale-heading');
+    const stepBtns = document.querySelectorAll('#diatonic-step-buttons .diatonic-btn');
+    const modeSelect = document.getElementById('synth-mode-select');
 
-    function renderKeys() {
+    function renderNumberButtons() {
       if (!container) return;
       container.innerHTML = '';
 
-      const root = state.currentRoot || 'A';
-      const scaleKey = state.currentScale || 'minor_pentatonic';
-      const scale = SCALES[scaleKey] || SCALES['minor_pentatonic'];
-      const baseMidi = ROOT_MIDI[root] || 57;
+      const stepData = DIATONIC_STEPS[state.diatonicStep] || DIATONIC_STEPS[0];
+      const modeKey = state.currentMode || 'ionian';
+      const mode = MODES[modeKey] || MODES['ionian'];
+      const baseMidi = stepData.baseMidi;
 
-      if (headingEl) {
-        headingEl.innerHTML = `<i class="fa-solid fa-music" style="color: var(--neon-cyan);"></i> ${root} ${scale.name.toUpperCase()} (KEYS 1-${scale.intervals.length})`;
-      }
-
-      scale.intervals.forEach((interval, index) => {
+      mode.intervals.forEach((interval, index) => {
         const midi = baseMidi + interval;
         const freq = 440 * Math.pow(2, (midi - 69) / 12);
         const noteName = getNoteNameFromMidi(midi);
-        const degree = scale.degrees[index] || '';
+        const degree = mode.degrees[index] || '';
         const shortcut = (index + 1).toString();
 
         const btn = document.createElement('button');
-        btn.className = 'synth-key';
+        btn.className = 'synth-key' + (index === 0 ? ' is-root' : '');
         btn.setAttribute('data-freq', freq.toFixed(2));
         btn.setAttribute('data-key', shortcut);
         btn.setAttribute('title', `${noteName} (${freq.toFixed(1)} Hz) - ${degree}`);
@@ -527,7 +533,7 @@
           <span class="synth-key-shortcut">[${shortcut}]</span>
         `;
 
-        // Click / Mouse
+        // Click / Mouse input
         btn.addEventListener('mousedown', () => {
           btn.classList.add('key-pressed');
           enableSound();
@@ -554,44 +560,35 @@
       });
     }
 
-    function arpeggiateScale() {
-      enableSound();
-      if (!container) return;
-      const keys = container.querySelectorAll('.synth-key');
-      keys.forEach((key, idx) => {
-        setTimeout(() => {
-          const freq = parseFloat(key.getAttribute('data-freq'));
-          key.classList.add('key-pressed');
-          playSynthNote(freq, 0.45);
-          setTimeout(() => key.classList.remove('key-pressed'), 250);
-        }, idx * 110);
-      });
-    }
+    // Diatonic step buttons: move through the 7 diatonic scales of C
+    stepBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        playClickBlip('high');
+        stepBtns.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
 
-    // Root select listener
-    if (rootSelect) {
-      rootSelect.value = state.currentRoot;
-      rootSelect.addEventListener('change', () => {
-        state.currentRoot = rootSelect.value;
-        renderKeys();
-        arpeggiateScale();
-      });
-    }
+        const stepIndex = parseInt(btn.getAttribute('data-step'), 10);
+        state.diatonicStep = stepIndex;
 
-    // Scale select listener
-    if (scaleSelect) {
-      scaleSelect.value = state.currentScale;
-      scaleSelect.addEventListener('change', () => {
-        state.currentScale = scaleSelect.value;
-        renderKeys();
-        arpeggiateScale();
-      });
-    }
+        // Default mode for this diatonic step
+        const defaultMode = btn.getAttribute('data-mode');
+        if (defaultMode && MODES[defaultMode]) {
+          state.currentMode = defaultMode;
+          if (modeSelect) modeSelect.value = defaultMode;
+        }
 
-    // Play button
-    if (playScaleBtn) {
-      playScaleBtn.addEventListener('click', () => {
-        arpeggiateScale();
+        renderNumberButtons();
+        // No automatic playback! User plays via number buttons or keys 1-8.
+      });
+    });
+
+    // Mode dropdown listener (lets user change mode on the current diatonic step)
+    if (modeSelect) {
+      modeSelect.value = state.currentMode;
+      modeSelect.addEventListener('change', () => {
+        playClickBlip('blip');
+        state.currentMode = modeSelect.value;
+        renderNumberButtons();
       });
     }
 
@@ -613,20 +610,29 @@
     });
 
     // Global hook for terminal commands
-    window.setSynthScale = function (root, scaleKey) {
-      if (root && ROOT_MIDI[root.toUpperCase()]) {
-        state.currentRoot = root.toUpperCase();
-        if (rootSelect) rootSelect.value = state.currentRoot;
+    window.setDiatonicScale = function (stepArg, modeArg) {
+      if (typeof stepArg === 'number' && stepArg >= 0 && stepArg <= 6) {
+        state.diatonicStep = stepArg;
+      } else if (typeof stepArg === 'string') {
+        const found = DIATONIC_STEPS.findIndex((s) => s.note.toLowerCase() === stepArg.toLowerCase() || s.step.toLowerCase() === stepArg.toLowerCase());
+        if (found !== -1) state.diatonicStep = found;
       }
-      if (scaleKey && SCALES[scaleKey.toLowerCase()]) {
-        state.currentScale = scaleKey.toLowerCase();
-        if (scaleSelect) scaleSelect.value = state.currentScale;
+      if (modeArg && MODES[modeArg.toLowerCase()]) {
+        state.currentMode = modeArg.toLowerCase();
+      } else {
+        state.currentMode = DIATONIC_STEPS[state.diatonicStep].defaultMode;
       }
-      renderKeys();
-      arpeggiateScale();
+
+      stepBtns.forEach((b, idx) => {
+        if (idx === state.diatonicStep) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+      if (modeSelect) modeSelect.value = state.currentMode;
+
+      renderNumberButtons();
     };
 
-    renderKeys();
+    renderNumberButtons();
   }
 
   /* ==========================================================================
@@ -1605,23 +1611,24 @@ Oct 30 20:21:05 zathu-box lan-beacon[420]: Subnet broadcast initialized.`
 
         case 'scale':
         case 'mode': {
-          if (args.length >= 2) {
-            const rootArg = args[0].toUpperCase();
-            const modeArg = args[1].toLowerCase();
-            if (window.setSynthScale) {
-              window.setSynthScale(rootArg, modeArg);
-              appendLine(`<span class="term-green">[OK] Synthesizer tuned to ${rootArg} ${modeArg}.</span>`);
+          if (args.length >= 1) {
+            const stepOrMode = args[0];
+            const modeArg = args[1] || null;
+            if (window.setDiatonicScale) {
+              window.setDiatonicScale(stepOrMode, modeArg);
+              const currentStep = DIATONIC_STEPS[state.diatonicStep];
+              appendLine(`<span class="term-green">[OK] Synthesizer tuned to Diatonic Step ${currentStep.name} (${MODES[state.currentMode].name}).</span>`);
             }
           } else {
+            const currentStep = DIATONIC_STEPS[state.diatonicStep];
             appendLine(`
-<span class="term-cyan">=== SYNTHESIZER SCALES &amp; MODES ===</span>
-Active Tuning: <span class="term-green">${state.currentRoot} ${SCALES[state.currentScale].name}</span>
+<span class="term-cyan">=== C MAJOR DIATONIC SCALES &amp; MODES ===</span>
+Active Step: <span class="term-green">${currentStep.name} (${MODES[state.currentMode].name})</span>
+Diatonic Steps:
+  &bull; <span class="term-green">C (I)</span> &bull; <span class="term-green">D (ii)</span> &bull; <span class="term-green">E (iii)</span> &bull; <span class="term-green">F (IV)</span> &bull; <span class="term-green">G (V)</span> &bull; <span class="term-green">A (vi)</span> &bull; <span class="term-green">B (vii)</span>
 Available Modes:
-  &bull; <span class="term-green">minor_pentatonic</span> &bull; <span class="term-green">minor</span> (Aeolian)
-  &bull; <span class="term-green">major</span> (Ionian)    &bull; <span class="term-green">dorian</span>
-  &bull; <span class="term-green">mixolydian</span>        &bull; <span class="term-green">phrygian</span>
-  &bull; <span class="term-green">blues</span>             &bull; <span class="term-green">major_pentatonic</span>
-Usage: <span class="term-amber">scale [root] [mode]</span> (e.g. <span class="term-cyan">scale C major</span> or <span class="term-cyan">scale E phrygian</span>)`);
+  &bull; <span class="term-green">ionian</span> &bull; <span class="term-green">dorian</span> &bull; <span class="term-green">phrygian</span> &bull; <span class="term-green">lydian</span> &bull; <span class="term-green">mixolydian</span> &bull; <span class="term-green">aeolian</span> &bull; <span class="term-green">locrian</span> &bull; <span class="term-green">blues</span>
+Usage: <span class="term-amber">scale [step] [mode]</span> (e.g. <span class="term-cyan">scale D dorian</span> or <span class="term-cyan">scale G mixolydian</span>)`);
           }
           break;
         }
@@ -1842,7 +1849,7 @@ Live App: <a href="https://setlore.zathu.net/" target="_blank" class="term-cyan"
      ========================================================================== */
   document.addEventListener('DOMContentLoaded', () => {
     initOscilloscope();
-    initScaleSynth();
+    initDiatonicSynth();
     initHardwareToggles();
     initLanTabs();
     initTerminal();
