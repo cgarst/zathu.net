@@ -863,25 +863,25 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
           </div>
           <div>
             <span>SUGGESTED: </span>
-            <button class="term-cmd-pill" data-cmd="projects">projects</button>
-            <button class="term-cmd-pill" data-cmd="lan">lan</button>
-            <button class="term-cmd-pill" data-cmd="music">music</button>
-            <button class="term-cmd-pill" data-cmd="synth">synth</button>
-            <button class="term-cmd-pill" data-cmd="theme">theme</button>
+            <button class="term-cmd-pill" data-cmd="ls -la">ls -la</button>
+            <button class="term-cmd-pill" data-cmd="pwd">pwd</button>
+            <button class="term-cmd-pill" data-cmd="neofetch">neofetch</button>
+            <button class="term-cmd-pill" data-cmd="cat manifesto.txt">cat manifesto.txt</button>
+            <button class="term-cmd-pill" data-cmd="cd projects">cd projects</button>
             <button class="term-cmd-pill" data-cmd="help">help</button>
           </div>
         </div>
 
         <div class="terminal-body" id="term-body">
           <div id="term-output" class="terminal-output">
-            <div class="terminal-line"><span class="term-cyan">ZATHU SYSTEM KERNEL V2.4-RELEASE [INITIALIZED]</span></div>
-            <div class="terminal-line"><span class="term-muted">Type '<span class="term-green">help</span>' for available commands, or click any suggested pill above.</span></div>
-            <div class="terminal-line"><span class="term-muted">Tip: Type '<span class="term-green">projects</span>' to list live web apps, or '<span class="term-green">synth</span>' for audio.</span></div>
+            <div class="terminal-line"><span class="term-cyan">ZathuOS 2.4 LTS (GNU/Linux 6.11.0-zathu-amd64 x86_64)</span></div>
+            <div class="terminal-line"><span class="term-muted">Welcome to the interactive Zathu shell. Full VFS with <span class="term-green">ls</span>, <span class="term-green">cd</span>, <span class="term-green">cat</span>, <span class="term-green">pwd</span>, <span class="term-green">mkdir</span>, <span class="term-green">neofetch</span>, etc.</span></div>
+            <div class="terminal-line"><span class="term-muted">Press <span class="term-amber">[TAB]</span> for autocompletion. Type '<span class="term-green">help</span>' for full command list.</span></div>
           </div>
           
           <div class="terminal-prompt-row">
-            <span class="terminal-prompt-symbol">guest@zathu-box:~$</span>
-            <input type="text" id="term-input" class="terminal-input" autocomplete="off" spellcheck="false" autofocus placeholder="type a command...">
+            <span id="term-prompt-prefix" class="terminal-prompt-symbol"><span class="term-green">cgarst@zathu-box</span>:<span class="term-amber">~</span>$ </span>
+            <input type="text" id="term-input" class="terminal-input" autocomplete="off" spellcheck="false" autofocus placeholder="type a linux command (e.g. ls, pwd, cat, neofetch)...">
           </div>
         </div>
       </div>

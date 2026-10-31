@@ -1381,6 +1381,27 @@ body.crt-active::after {
 .term-amber { color: var(--neon-amber); }
 .term-magenta { color: var(--neon-magenta); }
 .term-muted { color: var(--text-dim); }
+.term-white { color: #f8fafc; }
+.term-dir { color: #38bdf8; font-weight: 700; }
+.term-exe { color: #4ade80; font-weight: 700; }
+.term-file { color: #e2e8f0; }
+.term-perm { color: #94a3b8; font-size: 0.82rem; }
+.term-neofetch {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0.5rem 0;
+}
+.term-ascii {
+  color: var(--neon-cyan);
+  font-weight: 800;
+  line-height: 1.25;
+  white-space: pre;
+}
+.term-sysinfo {
+  line-height: 1.5;
+}
 
 .term-cmd-pill {
   display: inline-block;
