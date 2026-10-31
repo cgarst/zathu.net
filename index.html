@@ -102,7 +102,6 @@
         <ul class="nav-links">
           <li><a href="#flagship" class="nav-link"><i class="fa-solid fa-layer-group"></i> Flagship Apps</a></li>
           <li><a href="#lan-vault" class="nav-link"><i class="fa-solid fa-network-wired"></i> LAN Vault</a></li>
-          <li><a href="#terminal-sh" class="nav-link"><i class="fa-solid fa-terminal"></i> Terminal</a></li>
           <li><a href="#philosophy" class="nav-link"><i class="fa-solid fa-microchip"></i> Philosophy</a></li>
         </ul>
       </nav>
@@ -146,9 +145,9 @@
               <i class="fa-solid fa-bolt"></i>
               <span>Explore Projects</span>
             </a>
-            <a href="#terminal-sh" class="btn-secondary">
-              <i class="fa-solid fa-terminal"></i>
-              <span>Launch Terminal &gt;_</span>
+            <a href="#lan-vault" class="btn-secondary">
+              <i class="fa-solid fa-network-wired"></i>
+              <span>LAN Party Vault</span>
             </a>
           </div>
 
@@ -852,58 +851,6 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
     </div>
   </section>
 
-  <!-- Interactive Hacker Terminal (zathu-sh) -->
-  <section class="terminal-section" id="terminal-sh">
-    <div class="container">
-      
-      <div class="section-header">
-        <div class="section-label">
-          <i class="fa-solid fa-code"></i>
-          <span>LIVE SHELL PROMPT</span>
-        </div>
-        <h2 class="section-title">Interactive Terminal Console</h2>
-        <p class="section-desc">
-          Test drive Zathu Software directly in your browser. Type commands below or click the quick pills to query repositories, trigger audio synthesis, or examine system lore.
-        </p>
-      </div>
-
-      <div class="terminal-window">
-        <div class="terminal-titlebar">
-          <div class="terminal-titlebar-left">
-            <div class="code-dots">
-              <span class="code-dot"></span>
-              <span class="code-dot"></span>
-              <span class="code-dot"></span>
-            </div>
-            <span>zathu-sh v2.4 (x86_64-apple-darwin) -- zsh</span>
-          </div>
-          <div>
-            <span>SUGGESTED: </span>
-            <button class="term-cmd-pill" data-cmd="ls -la">ls -la</button>
-            <button class="term-cmd-pill" data-cmd="pwd">pwd</button>
-            <button class="term-cmd-pill" data-cmd="neofetch">neofetch</button>
-            <button class="term-cmd-pill" data-cmd="cat manifesto.txt">cat manifesto.txt</button>
-            <button class="term-cmd-pill" data-cmd="cd projects">cd projects</button>
-            <button class="term-cmd-pill" data-cmd="help">help</button>
-          </div>
-        </div>
-
-        <div class="terminal-body" id="term-body">
-          <div id="term-output" class="terminal-output">
-            <div class="terminal-line"><span class="term-cyan">ZathuOS 2.4 LTS (GNU/Linux 6.11.0-zathu-amd64 x86_64)</span></div>
-            <div class="terminal-line"><span class="term-muted">Welcome to the interactive Zathu shell. Full VFS with <span class="term-green">ls</span>, <span class="term-green">cd</span>, <span class="term-green">cat</span>, <span class="term-green">pwd</span>, <span class="term-green">mkdir</span>, <span class="term-green">neofetch</span>, etc.</span></div>
-            <div class="terminal-line"><span class="term-muted">Press <span class="term-amber">[TAB]</span> for autocompletion. Type '<span class="term-green">help</span>' for full command list.</span></div>
-          </div>
-          
-          <div class="terminal-prompt-row">
-            <span id="term-prompt-prefix" class="terminal-prompt-symbol"><span class="term-green">cgarst@zathu-box</span>:<span class="term-amber">~</span>$ </span>
-            <input type="text" id="term-input" class="terminal-input" autocomplete="off" spellcheck="false" placeholder="type a linux command (e.g. ls, pwd, cat, neofetch)...">
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </section>
 
   <!-- Dev Philosophy / Values -->
   <section class="section" id="philosophy" style="border-top: 1px solid var(--border-dim);">

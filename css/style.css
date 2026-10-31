@@ -1379,118 +1379,14 @@ code, pre, .font-mono {
 }
 
 /* ==========================================================================
-   INTERACTIVE HACKER TERMINAL (zathu-sh)
+   CODE SYNTAX HIGHLIGHTING (LAN Vault & Code Snippets)
    ========================================================================== */
-.terminal-section {
-  padding: 5rem 0;
-}
-
-.terminal-window {
-  background: #05070d;
-  border: 1px solid #1e293b;
-  border-radius: var(--radius-xl);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
-  overflow: hidden;
-}
-
-.terminal-titlebar {
-  background: #0c101a;
-  border-bottom: 1px solid var(--border-dim);
-  padding: 0.75rem 1.25rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--text-dim);
-}
-
-.terminal-titlebar-left {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.terminal-body {
-  padding: 1.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.88rem;
-  min-height: 280px;
-  max-height: 480px;
-  overflow-y: auto;
-  line-height: 1.6;
-}
-
-.terminal-output {
-  margin-bottom: 1rem;
-}
-
-.terminal-line {
-  margin-bottom: 0.4rem;
-  word-break: break-word;
-}
-
-.terminal-prompt-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.terminal-prompt-symbol {
-  color: var(--neon-emerald);
-  font-weight: 700;
-}
-
-.terminal-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--neon-cyan);
-  font-family: var(--font-mono);
-  font-size: 0.88rem;
-}
-
 .term-cyan { color: var(--neon-cyan); }
 .term-green { color: var(--neon-emerald); }
 .term-amber { color: var(--neon-amber); }
 .term-magenta { color: var(--neon-magenta); }
 .term-muted { color: var(--text-dim); }
 .term-white { color: #f8fafc; }
-.term-dir { color: #38bdf8; font-weight: 700; }
-.term-exe { color: #4ade80; font-weight: 700; }
-.term-file { color: #e2e8f0; }
-.term-perm { color: #94a3b8; font-size: 0.82rem; }
-.term-neofetch {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-  flex-wrap: wrap;
-  margin: 0.5rem 0;
-}
-.term-ascii {
-  color: var(--neon-cyan);
-  font-weight: 800;
-  line-height: 1.25;
-  white-space: pre;
-}
-.term-sysinfo {
-  line-height: 1.5;
-}
-
-.term-cmd-pill {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 0.1rem 0.4rem;
-  border-radius: 3px;
-  color: var(--neon-cyan);
-  cursor: pointer;
-  margin: 0 0.2rem;
-}
-
-.term-cmd-pill:hover {
-  background: rgba(0, 240, 255, 0.2);
-}
 
 /* ==========================================================================
    PHILOSOPHY / MANIFESTO RACK

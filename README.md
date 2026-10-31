@@ -22,9 +22,7 @@ Deployed seamlessly under **GitHub Pages**.
 
 - **Cyber-Hardware Aesthetic**: Inspired by analog rack gear, synthesizers, and vintage terminal interfaces.
 - **Interactive Oscilloscope Canvas**: Real-time waveform visualizer (Sine, Sawtooth, Square, Pulse) reacting to cursor movement and audio clicks.
-- **Web Audio 6-String Jam Fretboard**: Playable guitar strings (E-A-D-G-B-e) directly in the browser via Web Audio synthesizer with hotkeys `[1]` through `[6]`.
-- **Integrated Linux Terminal (`zathu-sh`)**: Working command-line shell with virtual filesystem, core utilities (`ls`, `pwd`, `cd`, `cat`, `neofetch`), and tab autocompletion.
-- **Hardware Mode Controls**: CRT phosphor scanlines toggle and synthesized audio soundboard toggle.
+- **Web Audio Modal Synthesizer**: Chromatic root key selector and scale modes (Natural Minor, Harmonic Minor, Pentatonic, Dorian, Phrygian, Lydian, Mixolydian, Major) with auto-vibrato and hotkeys `[1]` through `[8]`.
 - **Vanilla Web Stack**: Pure HTML5, CSS3, and JavaScript for fast load times and zero build dependencies.
 
 ---
