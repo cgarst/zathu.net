@@ -97,9 +97,12 @@
   let isRibbonPlaying = false;
   let ribbonActiveIndex = -1;
   let ribbonAnchorX = 0;
+  let ribbonCurrentX = 0;
   let ribbonBaseFreq = 0;
-  let ribbonCurrentFreq = 0;
-  let ribbonCents = 0;
+  let ribbonCutoff = 2400;
+  let ribbonTargetCents = 0;
+  let ribbonCurrentCents = 0;
+  let vibratoStartTime = 0;
 
   function initAudioContext() {
     if (!audioCtx) {
@@ -242,7 +245,7 @@
     keys.forEach((keyEl) => keyEl.classList.remove('key-pressed'));
   }
 
-  // Interactive wave click & drag: binds directly to scale notes with vibrato wiggle room
+  // Interactive wave click & drag: binds directly to scale notes with automatic vibrato
   function startRibbonTone(x, y, width, height) {
     enableSound();
     if (!audioCtx || !masterGain) return;
@@ -258,11 +261,17 @@
     const index = Math.max(0, Math.min(N - 1, Math.floor(clampedX / zoneWidth)));
     const note = notes[index];
 
+    const clampedY = Math.max(0, Math.min(height, y));
+    const cutoff = 300 + (1 - clampedY / height) * 5700;
+
     ribbonActiveIndex = index;
     ribbonAnchorX = clampedX;
+    ribbonCurrentX = clampedX;
     ribbonBaseFreq = note.freq;
-    ribbonCurrentFreq = note.freq;
-    ribbonCents = 0;
+    ribbonCutoff = cutoff;
+    ribbonTargetCents = 0;
+    ribbonCurrentCents = 0;
+    vibratoStartTime = audioCtx.currentTime;
 
     try {
       const now = audioCtx.currentTime;
@@ -272,11 +281,9 @@
 
       ribbonOsc.type = state.currentWaveform || 'sine';
 
-      const clampedY = Math.max(0, Math.min(height, y));
-      const cutoff = 300 + (1 - clampedY / height) * 5700;
-
-      // Note "clicks" immediately into the scale note's fundamental pitch
+      // Note "clicks" immediately into pure scale pitch (0 cents)
       ribbonOsc.frequency.setValueAtTime(ribbonBaseFreq, now);
+      ribbonOsc.detune.setValueAtTime(0, now);
       ribbonFilter.type = 'lowpass';
       ribbonFilter.frequency.setValueAtTime(cutoff, now);
 
@@ -291,7 +298,7 @@
       isRibbonPlaying = true;
 
       highlightKeyByIndex(index);
-      updateScopeStatus(ribbonBaseFreq, cutoff, note.noteName, note.degree, 0);
+      updateScopeStatus(ribbonBaseFreq, cutoff, note.noteName, note.degree, 0, 0);
     } catch (e) {
       console.warn('Ribbon tone error:', e);
     }
@@ -306,6 +313,8 @@
     const N = notes.length;
     const zoneWidth = width / N;
     const clampedX = Math.max(0, Math.min(width - 1, x));
+    ribbonCurrentX = clampedX;
+
     const currentZone = Math.max(0, Math.min(N - 1, Math.floor(clampedX / zoneWidth)));
 
     // Transitioning / sliding into a new note zone in the scale
@@ -313,36 +322,34 @@
       ribbonActiveIndex = currentZone;
       ribbonAnchorX = clampedX; // Reset vibrato anchor to where new note was engaged
       ribbonBaseFreq = notes[currentZone].freq;
+      ribbonTargetCents = 0;
+      ribbonCurrentCents = 0;
+      vibratoStartTime = audioCtx.currentTime;
       highlightKeyByIndex(currentZone);
+
+      ribbonOsc.frequency.setTargetAtTime(ribbonBaseFreq, audioCtx.currentTime, 0.015);
+      ribbonOsc.detune.setValueAtTime(0, audioCtx.currentTime);
+    } else {
+      // Room around the note for vibrato movement after the note "clicks":
+      // Moving mouse sets the peak depth; vibrato oscillates automatically between 0 cents and this selected depth
+      const deltaX = clampedX - ribbonAnchorX;
+      const vibratoRoom = Math.max(16, zoneWidth * 0.45);
+      const vibratoRatio = Math.max(-1, Math.min(1, deltaX / vibratoRoom));
+      const maxVibratoCents = 100; // ±100 cents (±1 semitone)
+      ribbonTargetCents = Math.round(vibratoRatio * maxVibratoCents);
     }
 
-    const note = notes[ribbonActiveIndex];
-
-    // Room around the note for vibrato movement after the note "clicks":
-    // Allows expressive guitar-style pitch bend (±100 cents = 1 semitone)
-    const deltaX = clampedX - ribbonAnchorX;
-    const vibratoRoom = Math.max(16, zoneWidth * 0.45);
-    const vibratoRatio = Math.max(-1, Math.min(1, deltaX / vibratoRoom));
-    const maxVibratoCents = 100; // ±100 cents (±1 semitone)
-    ribbonCents = Math.round(vibratoRatio * maxVibratoCents);
-
-    const freq = ribbonBaseFreq * Math.pow(2, ribbonCents / 1200);
-    ribbonCurrentFreq = freq;
-
     const clampedY = Math.max(0, Math.min(height, y));
-    const cutoff = 300 + (1 - clampedY / height) * 5700;
-
-    const now = audioCtx.currentTime;
-    ribbonOsc.frequency.setTargetAtTime(freq, now, 0.015);
-    ribbonFilter.frequency.setTargetAtTime(cutoff, now, 0.02);
-
-    updateScopeStatus(freq, cutoff, note.noteName, note.degree, ribbonCents);
+    ribbonCutoff = 300 + (1 - clampedY / height) * 5700;
+    ribbonFilter.frequency.setTargetAtTime(ribbonCutoff, audioCtx.currentTime, 0.02);
   }
 
   function stopRibbonTone() {
     if (!isRibbonPlaying || !ribbonGain || !audioCtx) {
       isRibbonPlaying = false;
       ribbonActiveIndex = -1;
+      ribbonTargetCents = 0;
+      ribbonCurrentCents = 0;
       clearHighlightedKeys();
       return;
     }
@@ -355,18 +362,33 @@
     } catch (e) {}
     isRibbonPlaying = false;
     ribbonActiveIndex = -1;
+    ribbonTargetCents = 0;
+    ribbonCurrentCents = 0;
     clearHighlightedKeys();
     resetScopeStatus();
   }
 
-  function updateScopeStatus(freq, cutoff, noteName = null, degree = null, cents = 0) {
+  function updateScopeStatus(freq, cutoff, noteName = null, degree = null, cents = 0, targetCents = 0) {
     const statusEl = document.getElementById('scope-status-text');
     if (!statusEl) return;
 
     if (noteName) {
-      const centsStr = cents === 0 ? '±0¢' : (cents > 0 ? `+${cents}¢` : `${cents}¢`);
-      const vibColor = Math.abs(cents) > 5 ? 'var(--neon-amber)' : 'var(--neon-emerald)';
-      statusEl.innerHTML = `NOTE: <span style="color: var(--neon-cyan); font-weight: 700;">${noteName}</span> <span style="color: var(--text-dim);">(${degree})</span> &bull; <span style="color: ${vibColor}; font-weight: 700;">VIBRATO: ${centsStr}</span> &bull; <span style="color: var(--neon-amber);">${freq.toFixed(1)} Hz</span> &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
+      const roundedCents = Math.round(cents);
+      const roundedTarget = Math.round(targetCents);
+      let vibText = '0¢';
+      let vibColor = 'var(--neon-emerald)';
+
+      if (Math.abs(roundedTarget) > 2) {
+        const currentStr = roundedCents >= 0 ? `+${roundedCents}¢` : `${roundedCents}¢`;
+        const targetStr = roundedTarget >= 0 ? `+${roundedTarget}¢` : `${roundedTarget}¢`;
+        vibText = `${currentStr} <span style="opacity: 0.7; font-size: 0.9em;">[0 &harr; ${targetStr}]</span>`;
+        vibColor = 'var(--neon-amber)';
+      }
+
+      // Calculate instantaneous frequency with detune cents
+      const instantFreq = freq * Math.pow(2, cents / 1200);
+
+      statusEl.innerHTML = `NOTE: <span style="color: var(--neon-cyan); font-weight: 700;">${noteName}</span> <span style="color: var(--text-dim);">(${degree})</span> &bull; <span style="color: ${vibColor}; font-weight: 700;">AUTO-VIBRATO: ${vibText}</span> &bull; <span style="color: var(--neon-amber);">${instantFreq.toFixed(1)} Hz</span> &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
     } else {
       statusEl.innerHTML = `<span style="color: var(--neon-cyan); font-weight: 700;">FREQ: ${Math.round(freq)} Hz</span> &bull; <span style="color: var(--neon-amber);">CUTOFF: ${Math.round(cutoff)} Hz</span> &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
     }
@@ -375,7 +397,7 @@
   function resetScopeStatus() {
     const statusEl = document.getElementById('scope-status-text');
     if (statusEl) {
-      statusEl.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> CLICK & DRAG WAVE FOR SCALE NOTES & VIBRATO &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
+      statusEl.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> CLICK & DRAG WAVE FOR SCALE NOTES & AUTO-VIBRATO &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
     }
   }
 
@@ -483,21 +505,42 @@
       ctx.lineTo(width, height / 2);
       ctx.stroke();
 
-      // If ribbon note is active, draw illuminated column & zero-vibrato center marker
+      // If ribbon note is active, draw illuminated column, anchor, and animated vibrato indicator
       if (isRibbonPlaying && ribbonActiveIndex >= 0 && ribbonActiveIndex < N) {
         const xLeft = ribbonActiveIndex * zoneWidth;
         ctx.fillStyle = 'rgba(0, 240, 255, 0.08)';
         ctx.fillRect(xLeft, 0, zoneWidth, height);
 
-        // Center notch for note's exact root/center pitch
-        const centerX = (ribbonActiveIndex + 0.5) * zoneWidth;
-        ctx.strokeStyle = 'rgba(0, 240, 255, 0.35)';
+        // 0-cents anchor line (where note clicked)
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
         ctx.setLineDash([2, 4]);
         ctx.beginPath();
-        ctx.moveTo(centerX, 0);
-        ctx.lineTo(centerX, height);
+        ctx.moveTo(ribbonAnchorX, 0);
+        ctx.lineTo(ribbonAnchorX, height);
         ctx.stroke();
         ctx.setLineDash([]);
+
+        // If user has dragged away from anchor to select vibrato depth
+        if (Math.abs(ribbonTargetCents) > 2) {
+          // Where user is selecting (target depth marker)
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.35)';
+          ctx.beginPath();
+          ctx.moveTo(ribbonCurrentX, 0);
+          ctx.lineTo(ribbonCurrentX, height);
+          ctx.stroke();
+
+          // Animated oscillating orb moving back and forth between 0 cents (ribbonAnchorX) and selection (ribbonCurrentX)
+          const lfoFactor = ribbonTargetCents !== 0 ? (ribbonCurrentCents / ribbonTargetCents) : 0;
+          const oscX = ribbonAnchorX + (ribbonCurrentX - ribbonAnchorX) * lfoFactor;
+
+          ctx.fillStyle = '#00f0ff';
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#00f0ff';
+          ctx.beginPath();
+          ctx.arc(oscX, height / 2, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
       }
 
       // Draw Note Names on top and Key Shortcuts on bottom of canvas
@@ -518,6 +561,24 @@
     }
 
     function render() {
+      // Automatic vibrato modulation: continuously cycles between 0 cents and ribbonTargetCents
+      if (isRibbonPlaying && ribbonOsc && audioCtx) {
+        const now = audioCtx.currentTime;
+        const t = Math.max(0, now - vibratoStartTime);
+        const rate = 5.2; // 5.2 Hz natural guitar vibrato speed
+        // Oscillates between 0 and 1: 0 at t=0, goes up to 1, then back to 0
+        const lfoCycle = 0.5 - 0.5 * Math.cos(2 * Math.PI * rate * t);
+        ribbonCurrentCents = ribbonTargetCents * lfoCycle;
+
+        ribbonOsc.detune.setTargetAtTime(ribbonCurrentCents, now, 0.015);
+
+        const notes = getActiveScaleNotes();
+        if (notes[ribbonActiveIndex]) {
+          const note = notes[ribbonActiveIndex];
+          updateScopeStatus(ribbonBaseFreq, ribbonCutoff, note.noteName, note.degree, ribbonCurrentCents, ribbonTargetCents);
+        }
+      }
+
       ctx.fillStyle = '#04070c';
       ctx.fillRect(0, 0, width, height);
 
