@@ -264,12 +264,20 @@
     const clampedY = Math.max(0, Math.min(height, y));
     const cutoff = 300 + (1 - clampedY / height) * 5700;
 
+    // 0 cents is strictly in the middle of the bar displayed
+    const noteCenterX = (index + 0.5) * zoneWidth;
+
     ribbonActiveIndex = index;
-    ribbonAnchorX = clampedX;
+    ribbonAnchorX = noteCenterX;
     ribbonCurrentX = clampedX;
     ribbonBaseFreq = note.freq;
     ribbonCutoff = cutoff;
-    ribbonTargetCents = 0;
+
+    // Vibrato depth is measured relative to the middle of the bar (0 cents)
+    const deltaX = clampedX - noteCenterX;
+    const halfZone = Math.max(16, zoneWidth * 0.48);
+    const vibratoRatio = Math.max(-1, Math.min(1, deltaX / halfZone));
+    ribbonTargetCents = Math.round(vibratoRatio * 100);
     ribbonCurrentCents = 0;
     vibratoStartTime = audioCtx.currentTime;
 
@@ -298,7 +306,7 @@
       isRibbonPlaying = true;
 
       highlightKeyByIndex(index);
-      updateScopeStatus(ribbonBaseFreq, cutoff, note.noteName, note.degree, 0, 0);
+      updateScopeStatus(ribbonBaseFreq, cutoff, note.noteName, note.degree, 0, ribbonTargetCents);
     } catch (e) {
       console.warn('Ribbon tone error:', e);
     }
@@ -320,24 +328,24 @@
     // Transitioning / sliding into a new note zone in the scale
     if (currentZone !== ribbonActiveIndex) {
       ribbonActiveIndex = currentZone;
-      ribbonAnchorX = clampedX; // Reset vibrato anchor to where new note was engaged
+      const noteCenterX = (currentZone + 0.5) * zoneWidth;
+      ribbonAnchorX = noteCenterX; // Middle of the bar displayed is 0 cents
       ribbonBaseFreq = notes[currentZone].freq;
-      ribbonTargetCents = 0;
-      ribbonCurrentCents = 0;
       vibratoStartTime = audioCtx.currentTime;
       highlightKeyByIndex(currentZone);
 
       ribbonOsc.frequency.setTargetAtTime(ribbonBaseFreq, audioCtx.currentTime, 0.015);
-      ribbonOsc.detune.setValueAtTime(0, audioCtx.currentTime);
-    } else {
-      // Room around the note for vibrato movement after the note "clicks":
-      // Moving mouse sets the peak depth; vibrato oscillates automatically between 0 cents and this selected depth
-      const deltaX = clampedX - ribbonAnchorX;
-      const vibratoRoom = Math.max(16, zoneWidth * 0.45);
-      const vibratoRatio = Math.max(-1, Math.min(1, deltaX / vibratoRoom));
-      const maxVibratoCents = 100; // ±100 cents (±1 semitone)
-      ribbonTargetCents = Math.round(vibratoRatio * maxVibratoCents);
     }
+
+    const noteCenterX = (ribbonActiveIndex + 0.5) * zoneWidth;
+    ribbonAnchorX = noteCenterX;
+
+    // Measure vibrato offset relative to the middle of the bar (0 cents)
+    const deltaX = clampedX - noteCenterX;
+    const halfZone = Math.max(16, zoneWidth * 0.48);
+    const vibratoRatio = Math.max(-1, Math.min(1, deltaX / halfZone));
+    const maxVibratoCents = 100; // ±100 cents (±1 semitone)
+    ribbonTargetCents = Math.round(vibratoRatio * maxVibratoCents);
 
     const clampedY = Math.max(0, Math.min(height, y));
     ribbonCutoff = 300 + (1 - clampedY / height) * 5700;
@@ -505,33 +513,54 @@
       ctx.lineTo(width, height / 2);
       ctx.stroke();
 
-      // If ribbon note is active, draw illuminated column, anchor, and animated vibrato indicator
+      // Subtle center guide ticks in the middle of each bar (marking 0 cents)
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
+      ctx.setLineDash([2, 5]);
+      for (let i = 0; i < N; i++) {
+        const cX = (i + 0.5) * zoneWidth;
+        ctx.beginPath();
+        ctx.moveTo(cX, 18);
+        ctx.lineTo(cX, height - 16);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      // If ribbon note is active, draw illuminated column, middle anchor, and animated vibrato indicator
       if (isRibbonPlaying && ribbonActiveIndex >= 0 && ribbonActiveIndex < N) {
         const xLeft = ribbonActiveIndex * zoneWidth;
+        const noteCenterX = (ribbonActiveIndex + 0.5) * zoneWidth;
+
+        // Illuminated bar
         ctx.fillStyle = 'rgba(0, 240, 255, 0.08)';
         ctx.fillRect(xLeft, 0, zoneWidth, height);
 
-        // 0-cents anchor line (where note clicked)
-        ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
-        ctx.setLineDash([2, 4]);
+        // 0-cents center line: strictly in the middle of the bar displayed
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.55)';
+        ctx.setLineDash([3, 3]);
         ctx.beginPath();
-        ctx.moveTo(ribbonAnchorX, 0);
-        ctx.lineTo(ribbonAnchorX, height);
+        ctx.moveTo(noteCenterX, 0);
+        ctx.lineTo(noteCenterX, height);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // If user has dragged away from anchor to select vibrato depth
+        // "0¢" label directly on the middle line
+        ctx.font = '9px "JetBrains Mono", monospace';
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.85)';
+        ctx.textAlign = 'center';
+        ctx.fillText('0¢', noteCenterX, height / 2 - 14);
+
+        // If user has dragged away from the middle of the bar to select vibrato depth
         if (Math.abs(ribbonTargetCents) > 2) {
           // Where user is selecting (target depth marker)
-          ctx.strokeStyle = 'rgba(251, 191, 36, 0.35)';
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
           ctx.beginPath();
           ctx.moveTo(ribbonCurrentX, 0);
           ctx.lineTo(ribbonCurrentX, height);
           ctx.stroke();
 
-          // Animated oscillating orb moving back and forth between 0 cents (ribbonAnchorX) and selection (ribbonCurrentX)
+          // Animated oscillating orb moving back and forth between 0 cents (middle of the bar: noteCenterX) and selection (ribbonCurrentX)
           const lfoFactor = ribbonTargetCents !== 0 ? (ribbonCurrentCents / ribbonTargetCents) : 0;
-          const oscX = ribbonAnchorX + (ribbonCurrentX - ribbonAnchorX) * lfoFactor;
+          const oscX = noteCenterX + (ribbonCurrentX - noteCenterX) * lfoFactor;
 
           ctx.fillStyle = '#00f0ff';
           ctx.shadowBlur = 10;
