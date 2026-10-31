@@ -118,51 +118,7 @@ code, pre, .font-mono {
   z-index: 2;
 }
 
-/* ==========================================================================
-   CRT / Scanlines Hardware Mode Overlay
-   ========================================================================== */
-.crt-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 99999;
-  pointer-events: none;
-  background: linear-gradient(
-    rgba(18, 16, 16, 0) 50%, 
-    rgba(0, 0, 0, 0.35) 50%
-  );
-  background-size: 100% 4px;
-  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.85);
-}
 
-body.crt-active .crt-overlay {
-  display: block;
-}
-
-body.crt-active {
-  text-shadow: 0 0 1.5px rgba(0, 240, 255, 0.4);
-}
-
-body.crt-active::after {
-  content: " ";
-  display: block;
-  position: fixed;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: rgba(18, 16, 16, 0.1);
-  opacity: 0;
-  z-index: 99998;
-  pointer-events: none;
-  animation: flicker 0.15s infinite;
-}
-
-@keyframes flicker {
-  0% { opacity: 0.15; }
-  50% { opacity: 0.25; }
-  100% { opacity: 0.15; }
-}
 
 /* ==========================================================================
    Navigation Bar & Telemetry Bar
@@ -540,7 +496,7 @@ body.crt-active::after {
 .led-magenta { background: var(--neon-magenta); box-shadow: 0 0 6px var(--neon-magenta); }
 .led-green { background: var(--neon-emerald); box-shadow: 0 0 6px var(--neon-emerald); }
 
-/* Oscilloscope Display */
+/* Oscilloscope Display with Permanent CRT Phosphor Tube */
 .oscilloscope-screen-wrapper {
   background: #04070d;
   position: relative;
@@ -548,13 +504,41 @@ body.crt-active::after {
   border-bottom: 1px solid var(--border-dim);
 }
 
+.oscilloscope-crt-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  box-shadow: 
+    inset 0 0 40px rgba(0, 0, 0, 0.95),
+    inset 0 0 15px rgba(0, 240, 255, 0.1),
+    0 0 20px rgba(0, 240, 255, 0.08);
+}
+
 .oscilloscope-canvas {
   width: 100%;
   height: 180px;
   display: block;
-  background: #04070c;
+  background: #020509;
+}
+
+/* Permanent CRT Phosphor Scanlines & Bezel Vignette */
+.oscilloscope-crt-scanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: 
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.38) 50%),
+    radial-gradient(ellipse at center, rgba(0, 240, 255, 0.03) 0%, rgba(0, 0, 0, 0.55) 90%);
+  background-size: 100% 3px, 100% 100%;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(0, 240, 255, 0.15);
+  box-shadow: 
+    inset 0 0 35px rgba(0, 0, 0, 0.95),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  mix-blend-mode: hard-light;
 }
 
 .oscilloscope-meta {

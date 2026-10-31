@@ -9,7 +9,6 @@
   // State Management
   const state = {
     audioEnabled: false,
-    crtEnabled: false,
     currentWaveform: 'sine',
     rootNote: 'E',
     rootMidi: 52, // E3 (164.81 Hz)
@@ -961,11 +960,10 @@
   }
 
   /* ==========================================================================
-     HARDWARE TOGGLES (Sound FX & CRT Mode)
+     HARDWARE TOGGLES (Sound FX)
      ========================================================================== */
   function initHardwareToggles() {
     const soundToggle = document.getElementById('sound-toggle-btn');
-    const crtToggle = document.getElementById('crt-toggle-btn');
 
     // Restore Sound setting
     const savedAudio = localStorage.getItem('zathu_sound');
@@ -988,31 +986,6 @@
           soundToggle.classList.remove('active');
           soundToggle.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> SOUND: OFF';
           localStorage.setItem('zathu_sound', 'disabled');
-        }
-      });
-    }
-
-    // Restore CRT setting
-    const savedCrt = localStorage.getItem('zathu_crt');
-    if (savedCrt === 'enabled') {
-      state.crtEnabled = true;
-      document.body.classList.add('crt-active');
-      if (crtToggle) crtToggle.classList.add('active');
-    }
-
-    // CRT Toggle Click
-    if (crtToggle) {
-      crtToggle.addEventListener('click', () => {
-        state.crtEnabled = !state.crtEnabled;
-        playClickBlip('blip');
-        if (state.crtEnabled) {
-          document.body.classList.add('crt-active');
-          crtToggle.classList.add('active');
-          localStorage.setItem('zathu_crt', 'enabled');
-        } else {
-          document.body.classList.remove('crt-active');
-          crtToggle.classList.remove('active');
-          localStorage.setItem('zathu_crt', 'disabled');
         }
       });
     }
@@ -1997,9 +1970,7 @@ Usage: <span class="term-amber">scale [key] [mode]</span> (e.g. <span class="ter
         }
 
         case 'theme': {
-          const crtToggle = document.getElementById('crt-toggle-btn');
-          if (crtToggle) crtToggle.click();
-          appendLine(`<span class="term-green">&gt; CRT Phosphor display state toggled.</span>`);
+          appendLine(`<span class="term-cyan">&gt; CRT Phosphor display is permanently active on the oscilloscope tube.</span>`);
           break;
         }
 
@@ -2102,7 +2073,8 @@ Live App: <a href="https://setlore.zathu.net/" target="_blank" class="term-cyan"
   <span class="term-green">curl &lt;url&gt;</span>      - Query URL headers and telemetry
   <span class="term-green">git &lt;cmd&gt;</span>       - git status / log / branch / clone
   <span class="term-green">synth</span>           - Trigger Web Audio synthesizer arpeggio
-  <span class="term-green">theme</span>           - Toggle CRT scanlines mode
+  <span class="term-green">key [note]</span>      - Tune synth root key (e.g. key E, key A, key C)
+  <span class="term-green">scale [k] [m]</span>   - Tune scale & mode (e.g. scale E harmonic_minor)
   <span class="term-green">clear</span>           - Clear terminal screen
   <span class="term-green">history</span>         - Display session command history
   <span class="term-amber">[TAB]</span>           - Autocomplete file paths and commands`);

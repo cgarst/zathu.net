@@ -39,9 +39,6 @@
 </head>
 <body>
 
-  <!-- CRT Scanline Overlay -->
-  <div class="crt-overlay" aria-hidden="true"></div>
-
   <!-- Toast Notification Box -->
   <div id="toast-notice" class="toast-notice" role="alert">
     <i class="fa-solid fa-check"></i>
@@ -60,9 +57,6 @@
         <span>CARRIER: 44.1kHz / 24-BIT</span>
       </div>
       <div class="telemetry-right">
-        <button id="crt-toggle-btn" class="hardware-toggle-btn" title="Toggle retro CRT phosphor scanlines">
-          <i class="fa-solid fa-tv"></i> CRT PHOSPHOR: OFF
-        </button>
         <button id="sound-toggle-btn" class="hardware-toggle-btn" title="Toggle 8-bit / Synth sound effects">
           <i class="fa-solid fa-volume-xmark"></i> SOUND: OFF
         </button>
@@ -170,9 +164,12 @@
               </div>
             </div>
 
-            <!-- Canvas Visualizer Screen -->
+            <!-- Canvas Visualizer Screen with Permanent CRT Phosphor Tube -->
             <div class="oscilloscope-screen-wrapper">
-              <canvas id="oscilloscope-canvas" class="oscilloscope-canvas" width="460" height="180" style="cursor: crosshair;"></canvas>
+              <div class="oscilloscope-crt-frame">
+                <canvas id="oscilloscope-canvas" class="oscilloscope-canvas" width="460" height="180" style="cursor: crosshair;"></canvas>
+                <div class="oscilloscope-crt-scanlines" aria-hidden="true"></div>
+              </div>
               
               <div class="oscilloscope-meta">
                 <span id="scope-status-text"><i class="fa-solid fa-hand-pointer"></i> CLICK & DRAG WAVE FOR SCALE NOTES & AUTO-VIBRATO</span>
