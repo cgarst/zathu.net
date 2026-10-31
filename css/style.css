@@ -121,90 +121,12 @@ code, pre, .font-mono {
 
 
 /* ==========================================================================
-   Navigation Bar & Telemetry Bar
+   Navigation Bar
    ========================================================================== */
-.top-telemetry-strip {
-  background: rgba(10, 14, 23, 0.85);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border-dim);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  padding: 0.35rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.telemetry-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.telemetry-left, .telemetry-right {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-}
-
-.status-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: var(--neon-emerald);
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.status-dot {
-  width: 7px;
-  height: 7px;
-  background-color: var(--neon-emerald);
-  border-radius: 50%;
-  box-shadow: 0 0 8px var(--neon-emerald);
-  animation: pulse-dot 2s infinite;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.85); }
-}
-
-.hardware-toggle-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-mid);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  padding: 0.2rem 0.65rem;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  transition: all 0.2s ease;
-}
-
-.hardware-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--text-main);
-  border-color: var(--neon-cyan);
-}
-
-.hardware-toggle-btn.active {
-  background: rgba(0, 240, 255, 0.15);
-  color: var(--neon-cyan);
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
-}
-
 /* Main Site Header */
 .site-header {
   position: sticky;
-  top: 31px;
+  top: 0;
   z-index: 999;
   background: rgba(7, 9, 14, 0.88);
   backdrop-filter: blur(16px);
@@ -309,20 +231,6 @@ code, pre, .font-mono {
   align-items: center;
 }
 
-.hero-pill-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.85rem;
-  border-radius: 999px;
-  background: rgba(168, 85, 247, 0.12);
-  border: 1px solid rgba(168, 85, 247, 0.35);
-  color: #c084fc;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-bottom: 1.25rem;
-}
 
 .hero-title {
   font-size: clamp(2.5rem, 5vw, 4.2rem);
@@ -1582,8 +1490,5 @@ code, pre, .font-mono {
   }
   .lan-specs-table {
     grid-template-columns: 1fr;
-  }
-  .top-telemetry-strip {
-    display: none;
   }
 }

@@ -8,7 +8,7 @@
 
   // State Management
   const state = {
-    audioEnabled: false,
+    audioEnabled: true,
     currentWaveform: 'sine',
     rootNote: 'E',
     rootMidi: 52, // E3 (164.81 Hz)
@@ -148,15 +148,7 @@
   }
 
   function enableSound() {
-    if (!state.audioEnabled) {
-      state.audioEnabled = true;
-      const soundToggle = document.getElementById('sound-toggle-btn');
-      if (soundToggle) {
-        soundToggle.classList.add('active');
-        soundToggle.innerHTML = '<i class="fa-solid fa-volume-high"></i> SOUND: ON';
-      }
-      localStorage.setItem('zathu_sound', 'enabled');
-    }
+    state.audioEnabled = true;
     initAudioContext();
   }
 
@@ -955,36 +947,9 @@
   }
 
   /* ==========================================================================
-     HARDWARE TOGGLES (Sound FX)
+     HARDWARE TOGGLES & WAVEFORM SWITCHER
      ========================================================================== */
   function initHardwareToggles() {
-    const soundToggle = document.getElementById('sound-toggle-btn');
-
-    // Restore Sound setting
-    const savedAudio = localStorage.getItem('zathu_sound');
-    if (savedAudio === 'enabled') {
-      state.audioEnabled = true;
-      if (soundToggle) soundToggle.classList.add('active');
-    }
-
-    // Sound Toggle Click
-    if (soundToggle) {
-      soundToggle.addEventListener('click', () => {
-        state.audioEnabled = !state.audioEnabled;
-        if (state.audioEnabled) {
-          soundToggle.classList.add('active');
-          soundToggle.innerHTML = '<i class="fa-solid fa-volume-high"></i> SOUND: ON';
-          localStorage.setItem('zathu_sound', 'enabled');
-          initAudioContext();
-          playArpeggio();
-        } else {
-          soundToggle.classList.remove('active');
-          soundToggle.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> SOUND: OFF';
-          localStorage.setItem('zathu_sound', 'disabled');
-        }
-      });
-    }
-
     // Waveform switcher buttons
     const waveBtns = document.querySelectorAll('.scope-btn');
     waveBtns.forEach((btn) => {
@@ -1032,7 +997,7 @@
         if (navigator.clipboard && textToCopy) {
           navigator.clipboard.writeText(textToCopy).then(() => {
             playClickBlip('high');
-            showToast('COPIED TO CLIPBOARD // READY IN TERMINAL');
+            showToast('COPIED TO CLIPBOARD');
           });
         }
       });
