@@ -66,6 +66,22 @@
     return `${note}${octave}`;
   }
 
+  // Active scale notes helper for the current mode & root
+  function getActiveScaleNotes() {
+    const modeKey = state.currentMode || 'minor_pentatonic';
+    const mode = MODES[modeKey] || MODES['minor_pentatonic'];
+    const baseMidi = state.rootMidi || 52; // E3 (164.81 Hz)
+
+    return mode.intervals.map((interval, index) => {
+      const midi = baseMidi + interval;
+      const freq = 440 * Math.pow(2, (midi - 69) / 12);
+      const noteName = getNoteNameFromMidi(midi);
+      const degree = mode.degrees[index] || '';
+      const shortcut = (index + 1).toString();
+      return { index, midi, freq, noteName, degree, shortcut };
+    });
+  }
+
   // Audio Engine State & Nodes
   let audioCtx = null;
   let masterGain = null;
@@ -74,6 +90,11 @@
   let ribbonGain = null;
   let ribbonFilter = null;
   let isRibbonPlaying = false;
+  let ribbonActiveIndex = -1;
+  let ribbonAnchorX = 0;
+  let ribbonBaseFreq = 0;
+  let ribbonCurrentFreq = 0;
+  let ribbonCents = 0;
 
   function initAudioContext() {
     if (!audioCtx) {
@@ -200,12 +221,43 @@
     });
   }
 
-  // Interactive continuous tone when clicking/dragging on the oscilloscope canvas
+  function highlightKeyByIndex(index) {
+    const keys = document.querySelectorAll('#synth-keys-container .synth-key');
+    keys.forEach((keyEl, i) => {
+      if (i === index) {
+        keyEl.classList.add('key-pressed');
+      } else {
+        keyEl.classList.remove('key-pressed');
+      }
+    });
+  }
+
+  function clearHighlightedKeys() {
+    const keys = document.querySelectorAll('#synth-keys-container .synth-key');
+    keys.forEach((keyEl) => keyEl.classList.remove('key-pressed'));
+  }
+
+  // Interactive wave click & drag: binds directly to scale notes with vibrato wiggle room
   function startRibbonTone(x, y, width, height) {
     enableSound();
     if (!audioCtx || !masterGain) return;
 
     stopRibbonTone();
+
+    const notes = getActiveScaleNotes();
+    if (!notes.length) return;
+
+    const N = notes.length;
+    const zoneWidth = width / N;
+    const clampedX = Math.max(0, Math.min(width - 1, x));
+    const index = Math.max(0, Math.min(N - 1, Math.floor(clampedX / zoneWidth)));
+    const note = notes[index];
+
+    ribbonActiveIndex = index;
+    ribbonAnchorX = clampedX;
+    ribbonBaseFreq = note.freq;
+    ribbonCurrentFreq = note.freq;
+    ribbonCents = 0;
 
     try {
       const now = audioCtx.currentTime;
@@ -215,22 +267,16 @@
 
       ribbonOsc.type = state.currentWaveform || 'sine';
 
-      // Map X (0..width) to frequency (110Hz A2 to 880Hz A5)
-      const minFreq = 110;
-      const maxFreq = 880;
-      const clampedX = Math.max(0, Math.min(width, x));
-      const freq = minFreq * Math.pow(maxFreq / minFreq, clampedX / width);
-
-      // Map Y (height..0) to filter cutoff (300Hz to 6000Hz)
       const clampedY = Math.max(0, Math.min(height, y));
       const cutoff = 300 + (1 - clampedY / height) * 5700;
 
-      ribbonOsc.frequency.setValueAtTime(freq, now);
+      // Note "clicks" immediately into the scale note's fundamental pitch
+      ribbonOsc.frequency.setValueAtTime(ribbonBaseFreq, now);
       ribbonFilter.type = 'lowpass';
       ribbonFilter.frequency.setValueAtTime(cutoff, now);
 
       ribbonGain.gain.setValueAtTime(0.0001, now);
-      ribbonGain.gain.linearRampToValueAtTime(0.3, now + 0.04);
+      ribbonGain.gain.linearRampToValueAtTime(0.32, now + 0.03);
 
       ribbonOsc.connect(ribbonFilter);
       ribbonFilter.connect(ribbonGain);
@@ -239,7 +285,8 @@
       ribbonOsc.start(now);
       isRibbonPlaying = true;
 
-      updateScopeStatus(freq, cutoff);
+      highlightKeyByIndex(index);
+      updateScopeStatus(ribbonBaseFreq, cutoff, note.noteName, note.degree, 0);
     } catch (e) {
       console.warn('Ribbon tone error:', e);
     }
@@ -248,24 +295,50 @@
   function updateRibbonTone(x, y, width, height) {
     if (!isRibbonPlaying || !ribbonOsc || !audioCtx) return;
 
-    const now = audioCtx.currentTime;
-    const minFreq = 110;
-    const maxFreq = 880;
-    const clampedX = Math.max(0, Math.min(width, x));
-    const freq = minFreq * Math.pow(maxFreq / minFreq, clampedX / width);
+    const notes = getActiveScaleNotes();
+    if (!notes.length) return;
+
+    const N = notes.length;
+    const zoneWidth = width / N;
+    const clampedX = Math.max(0, Math.min(width - 1, x));
+    const currentZone = Math.max(0, Math.min(N - 1, Math.floor(clampedX / zoneWidth)));
+
+    // Transitioning / sliding into a new note zone in the scale
+    if (currentZone !== ribbonActiveIndex) {
+      ribbonActiveIndex = currentZone;
+      ribbonAnchorX = clampedX; // Reset vibrato anchor to where new note was engaged
+      ribbonBaseFreq = notes[currentZone].freq;
+      highlightKeyByIndex(currentZone);
+    }
+
+    const note = notes[ribbonActiveIndex];
+
+    // Room around the note for vibrato movement after the note "clicks":
+    // Allows expressive guitar-style pitch bend (±100 cents = 1 semitone)
+    const deltaX = clampedX - ribbonAnchorX;
+    const vibratoRoom = Math.max(16, zoneWidth * 0.45);
+    const vibratoRatio = Math.max(-1, Math.min(1, deltaX / vibratoRoom));
+    const maxVibratoCents = 100; // ±100 cents (±1 semitone)
+    ribbonCents = Math.round(vibratoRatio * maxVibratoCents);
+
+    const freq = ribbonBaseFreq * Math.pow(2, ribbonCents / 1200);
+    ribbonCurrentFreq = freq;
 
     const clampedY = Math.max(0, Math.min(height, y));
     const cutoff = 300 + (1 - clampedY / height) * 5700;
 
-    ribbonOsc.frequency.setTargetAtTime(freq, now, 0.02);
+    const now = audioCtx.currentTime;
+    ribbonOsc.frequency.setTargetAtTime(freq, now, 0.015);
     ribbonFilter.frequency.setTargetAtTime(cutoff, now, 0.02);
 
-    updateScopeStatus(freq, cutoff);
+    updateScopeStatus(freq, cutoff, note.noteName, note.degree, ribbonCents);
   }
 
   function stopRibbonTone() {
     if (!isRibbonPlaying || !ribbonGain || !audioCtx) {
       isRibbonPlaying = false;
+      ribbonActiveIndex = -1;
+      clearHighlightedKeys();
       return;
     }
     try {
@@ -276,12 +349,20 @@
       }
     } catch (e) {}
     isRibbonPlaying = false;
+    ribbonActiveIndex = -1;
+    clearHighlightedKeys();
     resetScopeStatus();
   }
 
-  function updateScopeStatus(freq, cutoff) {
+  function updateScopeStatus(freq, cutoff, noteName = null, degree = null, cents = 0) {
     const statusEl = document.getElementById('scope-status-text');
-    if (statusEl) {
+    if (!statusEl) return;
+
+    if (noteName) {
+      const centsStr = cents === 0 ? '±0¢' : (cents > 0 ? `+${cents}¢` : `${cents}¢`);
+      const vibColor = Math.abs(cents) > 5 ? 'var(--neon-amber)' : 'var(--neon-emerald)';
+      statusEl.innerHTML = `NOTE: <span style="color: var(--neon-cyan); font-weight: 700;">${noteName}</span> <span style="color: var(--text-dim);">(${degree})</span> &bull; <span style="color: ${vibColor}; font-weight: 700;">VIBRATO: ${centsStr}</span> &bull; <span style="color: var(--neon-amber);">${freq.toFixed(1)} Hz</span> &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
+    } else {
       statusEl.innerHTML = `<span style="color: var(--neon-cyan); font-weight: 700;">FREQ: ${Math.round(freq)} Hz</span> &bull; <span style="color: var(--neon-amber);">CUTOFF: ${Math.round(cutoff)} Hz</span> &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
     }
   }
@@ -289,7 +370,7 @@
   function resetScopeStatus() {
     const statusEl = document.getElementById('scope-status-text');
     if (statusEl) {
-      statusEl.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> CLICK & DRAG SCREEN TO PLAY TONE &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
+      statusEl.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> CLICK & DRAG WAVE FOR SCALE NOTES & VIBRATO &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
     }
   }
 
@@ -366,18 +447,23 @@
     });
 
     function drawGrid() {
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.06)';
-      ctx.lineWidth = 1;
+      const notes = getActiveScaleNotes();
+      const N = notes.length || 8;
+      const zoneWidth = width / N;
 
-      // Vertical lines
-      for (let x = 0; x < width; x += 30) {
+      // Draw subtle scale note column dividers
+      for (let i = 0; i <= N; i++) {
+        const x = i * zoneWidth;
+        ctx.strokeStyle = i === 0 || i === N ? 'rgba(0, 240, 255, 0.12)' : 'rgba(0, 240, 255, 0.06)';
+        ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, height);
         ctx.stroke();
       }
 
-      // Horizontal lines
+      // Horizontal grid lines
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.04)';
       for (let y = 0; y < height; y += 30) {
         ctx.beginPath();
         ctx.moveTo(0, y);
@@ -386,11 +472,44 @@
       }
 
       // Center crosshairs
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.16)';
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
       ctx.beginPath();
       ctx.moveTo(0, height / 2);
       ctx.lineTo(width, height / 2);
       ctx.stroke();
+
+      // If ribbon note is active, draw illuminated column & zero-vibrato center marker
+      if (isRibbonPlaying && ribbonActiveIndex >= 0 && ribbonActiveIndex < N) {
+        const xLeft = ribbonActiveIndex * zoneWidth;
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.08)';
+        ctx.fillRect(xLeft, 0, zoneWidth, height);
+
+        // Center notch for note's exact root/center pitch
+        const centerX = (ribbonActiveIndex + 0.5) * zoneWidth;
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.35)';
+        ctx.setLineDash([2, 4]);
+        ctx.beginPath();
+        ctx.moveTo(centerX, 0);
+        ctx.lineTo(centerX, height);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Draw Note Names on top and Key Shortcuts on bottom of canvas
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      for (let i = 0; i < N; i++) {
+        const centerX = (i + 0.5) * zoneWidth;
+        const isActive = isRibbonPlaying && ribbonActiveIndex === i;
+
+        // Note name on top
+        ctx.fillStyle = isActive ? '#00f0ff' : 'rgba(148, 163, 184, 0.45)';
+        ctx.fillText(notes[i].noteName, centerX, 13);
+
+        // Key shortcut on bottom
+        ctx.fillStyle = isActive ? '#38bdf8' : 'rgba(100, 116, 139, 0.35)';
+        ctx.fillText(`[${notes[i].shortcut}]`, centerX, height - 5);
+      }
     }
 
     function render() {
