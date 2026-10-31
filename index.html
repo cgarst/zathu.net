@@ -185,21 +185,39 @@
               </div>
             </div>
 
-            <!-- Interactive Key of E Scale / Mode Synthesizer Controls -->
+            <!-- Interactive Scale & Mode Synthesizer Controls -->
             <div class="synth-bar-controls">
               <div class="mode-switcher-bar">
-                <span class="mode-bar-label">
-                  <i class="fa-solid fa-music" style="color: var(--neon-cyan);"></i> KEY OF E &bull; MODE:
-                </span>
+                <div class="root-key-selector">
+                  <label for="synth-root-select" class="mode-bar-label">
+                    <i class="fa-solid fa-music" style="color: var(--neon-cyan);"></i> KEY:
+                  </label>
+                  <select id="synth-root-select" class="synth-select" aria-label="Select Musical Key">
+                    <option value="C">C</option>
+                    <option value="C#">C# / Db</option>
+                    <option value="D">D</option>
+                    <option value="D#">D# / Eb</option>
+                    <option value="E" selected>E</option>
+                    <option value="F">F</option>
+                    <option value="F#">F# / Gb</option>
+                    <option value="G">G</option>
+                    <option value="G#">G# / Ab</option>
+                    <option value="A">A</option>
+                    <option value="A#">A# / Bb</option>
+                    <option value="B">B</option>
+                  </select>
+                  <span class="mode-bar-label" style="margin-left: 0.25rem;">MODE:</span>
+                </div>
                 <div class="mode-btn-group" id="mode-buttons-group">
-                  <button class="mode-btn active" data-mode="minor_pentatonic" title="E Minor Pentatonic">Minor Pent</button>
-                  <button class="mode-btn" data-mode="minor" title="E Natural Minor (Aeolian)">Natural Minor</button>
-                  <button class="mode-btn" data-mode="dorian" title="E Dorian">Dorian</button>
-                  <button class="mode-btn" data-mode="phrygian" title="E Phrygian">Phrygian</button>
-                  <button class="mode-btn" data-mode="lydian" title="E Lydian (#4)">Lydian</button>
-                  <button class="mode-btn" data-mode="mixolydian" title="E Mixolydian">Mixolydian</button>
-                  <button class="mode-btn" data-mode="major" title="E Major (Ionian)">Major</button>
-                  <button class="mode-btn" data-mode="blues" title="E Blues Scale">Blues</button>
+                  <button class="mode-btn active" data-mode="minor_pentatonic" title="Minor Pentatonic">Minor Pent</button>
+                  <button class="mode-btn" data-mode="minor" title="Natural Minor (Aeolian)">Natural Minor</button>
+                  <button class="mode-btn" data-mode="harmonic_minor" title="Harmonic Minor">Harmonic Minor</button>
+                  <button class="mode-btn" data-mode="dorian" title="Dorian">Dorian</button>
+                  <button class="mode-btn" data-mode="phrygian" title="Phrygian">Phrygian</button>
+                  <button class="mode-btn" data-mode="lydian" title="Lydian (#4)">Lydian</button>
+                  <button class="mode-btn" data-mode="mixolydian" title="Mixolydian">Mixolydian</button>
+                  <button class="mode-btn" data-mode="major" title="Major (Ionian)">Major</button>
+                  <button class="mode-btn" data-mode="blues" title="Blues Scale">Blues</button>
                 </div>
               </div>
 

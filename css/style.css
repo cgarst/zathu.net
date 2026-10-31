@@ -617,6 +617,31 @@ body.crt-active::after {
   font-weight: 700;
 }
 
+.root-key-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.synth-select {
+  background: #111827;
+  border: 1px solid var(--border-mid);
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.synth-select:hover, .synth-select:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.25);
+}
+
 .mode-btn-group {
   display: flex;
   align-items: center;

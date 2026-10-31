@@ -18,10 +18,30 @@
     historyIndex: -1,
   };
 
-  // Key of E Modes & Scales System
+  // Chromatic Root Keys & Standard MIDI Base Octave (Register ~130Hz to ~250Hz)
   const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-  // Musical Modes & Scales on Root E
+  const ROOT_KEYS = {
+    'C': 48,  // C3 (130.81 Hz)
+    'C#': 49,
+    'Db': 49,
+    'D': 50,  // D3 (146.83 Hz)
+    'D#': 51,
+    'Eb': 51,
+    'E': 52,  // E3 (164.81 Hz)
+    'F': 53,  // F3 (174.61 Hz)
+    'F#': 54,
+    'Gb': 54,
+    'G': 55,  // G3 (196.00 Hz)
+    'G#': 56,
+    'Ab': 56,
+    'A': 57,  // A3 (220.00 Hz)
+    'A#': 58,
+    'Bb': 58,
+    'B': 59   // B3 (246.94 Hz)
+  };
+
+  // Musical Modes & Scales
   const MODES = {
     'minor_pentatonic': {
       name: 'Minor Pentatonic',
@@ -32,6 +52,11 @@
       name: 'Natural Minor (Aeolian)',
       intervals: [0, 2, 3, 5, 7, 8, 10, 12],
       degrees: ['1 (Root)', '2nd', 'b3', '4th', '5th', 'b6', 'b7', '8 (Oct)']
+    },
+    'harmonic_minor': {
+      name: 'Harmonic Minor',
+      intervals: [0, 2, 3, 5, 7, 8, 11, 12],
+      degrees: ['1 (Root)', '2nd', 'b3', '4th', '5th', 'b6', '7th', '8 (Oct)']
     },
     'dorian': {
       name: 'Dorian',
@@ -687,11 +712,12 @@
   }
 
   /* ==========================================================================
-     KEY OF E MODES & SCALES SYNTHESIZER
+     CHROMATIC ROOT KEY & MODES / SCALES SYNTHESIZER
      ========================================================================== */
   function initEModeSynth() {
     const container = document.getElementById('synth-keys-container');
     const modeBtns = document.querySelectorAll('#mode-buttons-group .mode-btn');
+    const rootSelect = document.getElementById('synth-root-select');
 
     function renderNumberButtons() {
       if (!container) return;
@@ -699,7 +725,7 @@
 
       const modeKey = state.currentMode || 'minor_pentatonic';
       const mode = MODES[modeKey] || MODES['minor_pentatonic'];
-      const baseMidi = state.rootMidi; // 52 = E3 (164.81 Hz)
+      const baseMidi = state.rootMidi || 52; // Default E3 (164.81 Hz)
 
       mode.intervals.forEach((interval, index) => {
         const midi = baseMidi + interval;
@@ -747,7 +773,19 @@
       });
     }
 
-    // Mode buttons: switch active mode on E
+    // Root Key dropdown listener
+    if (rootSelect) {
+      rootSelect.value = state.rootNote || 'E';
+      rootSelect.addEventListener('change', () => {
+        playClickBlip('high');
+        const selectedKey = rootSelect.value;
+        state.rootNote = selectedKey;
+        state.rootMidi = ROOT_KEYS[selectedKey] || 52;
+        renderNumberButtons();
+      });
+    }
+
+    // Mode buttons: switch active mode
     modeBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
         playClickBlip('high');
@@ -781,7 +819,18 @@
       }
     });
 
-    // Global hook for terminal commands
+    // Global hooks for terminal commands
+    window.setKey = function (keyArg) {
+      if (!keyArg) return;
+      const formatted = keyArg.toUpperCase();
+      if (ROOT_KEYS[formatted]) {
+        state.rootNote = formatted;
+        state.rootMidi = ROOT_KEYS[formatted];
+        if (rootSelect) rootSelect.value = formatted;
+        renderNumberButtons();
+      }
+    };
+
     window.setEMode = function (modeArg) {
       if (modeArg && MODES[modeArg.toLowerCase()]) {
         state.currentMode = modeArg.toLowerCase();
@@ -795,6 +844,28 @@
         }
       });
 
+      renderNumberButtons();
+    };
+
+    window.setKeyAndMode = function (keyArg, modeArg) {
+      if (keyArg) {
+        const formatted = keyArg.toUpperCase();
+        if (ROOT_KEYS[formatted]) {
+          state.rootNote = formatted;
+          state.rootMidi = ROOT_KEYS[formatted];
+          if (rootSelect) rootSelect.value = formatted;
+        }
+      }
+      if (modeArg && MODES[modeArg.toLowerCase()]) {
+        state.currentMode = modeArg.toLowerCase();
+        modeBtns.forEach((b) => {
+          if (b.getAttribute('data-mode') === state.currentMode) {
+            b.classList.add('active');
+          } else {
+            b.classList.remove('active');
+          }
+        });
+      }
       renderNumberButtons();
     };
 
@@ -1775,31 +1846,64 @@ Oct 30 20:21:05 zathu-box lan-beacon[420]: Subnet broadcast initialized.`
           break;
         }
 
+        case 'key': {
+          if (args.length >= 1) {
+            const keyArg = args[0].toUpperCase();
+            if (ROOT_KEYS[keyArg]) {
+              window.setKey(keyArg);
+              appendLine(`<span class="term-green">[OK] Synthesizer root key set to: ${keyArg}.</span>`);
+            } else {
+              appendLine(`<span class="term-red">Unknown key '${args[0]}'. Available keys: C, C#, D, D#, E, F, F#, G, G#, A, A#, B</span>`);
+            }
+          } else {
+            appendLine(`<span class="term-cyan">Active Root Key:</span> <span class="term-green">${state.rootNote}</span> (Usage: <span class="term-amber">key [note]</span>)`);
+          }
+          break;
+        }
+
         case 'scale':
         case 'mode': {
-          if (args.length >= 1) {
-            const modeArg = args[0].toLowerCase();
+          if (args.length >= 2) {
+            const keyArg = args[0].toUpperCase();
+            const modeArg = args[1].toLowerCase();
             const targetMode = modeArg === 'pentatonic' ? 'minor_pentatonic' : (modeArg === 'aeolian' ? 'minor' : (modeArg === 'ionian' ? 'major' : modeArg));
-            if (window.setEMode && MODES[targetMode]) {
-              window.setEMode(targetMode);
-              appendLine(`<span class="term-green">[OK] Key of E Synthesizer tuned to: ${MODES[state.currentMode].name}.</span>`);
+            if (ROOT_KEYS[keyArg] && MODES[targetMode]) {
+              window.setKeyAndMode(keyArg, targetMode);
+              appendLine(`<span class="term-green">[OK] Synthesizer tuned to Key of ${state.rootNote} ${MODES[state.currentMode].name}.</span>`);
             } else {
-              appendLine(`<span class="term-red">Unknown mode '${args[0]}'. Available: ${Object.keys(MODES).join(', ')}</span>`);
+              appendLine(`<span class="term-red">Invalid key or mode. Usage: scale [key] [mode] (e.g. scale A harmonic_minor)</span>`);
+            }
+          } else if (args.length === 1) {
+            const arg = args[0];
+            const upper = arg.toUpperCase();
+            const lower = arg.toLowerCase();
+            const targetMode = lower === 'pentatonic' ? 'minor_pentatonic' : (lower === 'aeolian' ? 'minor' : (lower === 'ionian' ? 'major' : lower));
+            if (ROOT_KEYS[upper]) {
+              window.setKey(upper);
+              appendLine(`<span class="term-green">[OK] Synthesizer root key set to: ${upper}.</span>`);
+            } else if (MODES[targetMode]) {
+              window.setEMode(targetMode);
+              appendLine(`<span class="term-green">[OK] Synthesizer tuned to: Key of ${state.rootNote} ${MODES[state.currentMode].name}.</span>`);
+            } else {
+              appendLine(`<span class="term-red">Unknown key or mode '${arg}'.</span>`);
             }
           } else {
             appendLine(`
-<span class="term-cyan">=== KEY OF E MODES &amp; SCALES ===</span>
-Active Mode: <span class="term-green">${MODES[state.currentMode].name}</span>
+<span class="term-cyan">=== CHROMATIC KEYS &amp; MODES SYSTEM ===</span>
+Active Tuning: <span class="term-green">Key of ${state.rootNote} &bull; ${MODES[state.currentMode].name}</span>
+Available Keys:
+  &bull; <span class="term-green">C</span> &bull; <span class="term-green">C#</span> &bull; <span class="term-green">D</span> &bull; <span class="term-green">D#</span> &bull; <span class="term-green">E</span> &bull; <span class="term-green">F</span> &bull; <span class="term-green">F#</span> &bull; <span class="term-green">G</span> &bull; <span class="term-green">G#</span> &bull; <span class="term-green">A</span> &bull; <span class="term-green">A#</span> &bull; <span class="term-green">B</span>
 Available Modes:
   &bull; <span class="term-green">minor_pentatonic</span> (Minor Pentatonic)
   &bull; <span class="term-green">minor</span> (Natural Minor / Aeolian)
+  &bull; <span class="term-green">harmonic_minor</span> (Harmonic Minor)
   &bull; <span class="term-green">dorian</span> (Dorian)
   &bull; <span class="term-green">phrygian</span> (Phrygian)
   &bull; <span class="term-green">lydian</span> (Lydian - #4)
   &bull; <span class="term-green">mixolydian</span> (Mixolydian)
   &bull; <span class="term-green">major</span> (Major / Ionian)
   &bull; <span class="term-green">blues</span> (Blues Scale)
-Usage: <span class="term-amber">mode [name]</span> (e.g. <span class="term-cyan">mode dorian</span> or <span class="term-cyan">mode minor_pentatonic</span>)`);
+Usage: <span class="term-amber">scale [key] [mode]</span> (e.g. <span class="term-cyan">scale A harmonic_minor</span> or <span class="term-cyan">mode lydian</span> or <span class="term-cyan">key D</span>)`);
           }
           break;
         }
