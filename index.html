@@ -156,7 +156,7 @@
             <div class="hardware-rack-header">
               <div class="rack-header-left">
                 <div class="rack-screw"></div>
-                <span class="rack-title">OSCILLOSCOPE &bull; CH-01</span>
+                <span class="rack-title">OSCILLOSCOPE & SYNTH RACK</span>
               </div>
               <div class="rack-header-right">
                 <div class="led-cluster">
@@ -169,15 +169,15 @@
 
             <!-- Canvas Visualizer Screen -->
             <div class="oscilloscope-screen-wrapper">
-              <canvas id="oscilloscope-canvas" class="oscilloscope-canvas" width="460" height="180"></canvas>
+              <canvas id="oscilloscope-canvas" class="oscilloscope-canvas" width="460" height="180" style="cursor: crosshair;"></canvas>
               
               <div class="oscilloscope-meta">
-                <span>INTERACTIVE WAVEFORM GENERATOR</span>
+                <span id="scope-status-text"><i class="fa-solid fa-hand-pointer"></i> CLICK & DRAG SCREEN TO PLAY TONE</span>
                 <div class="scope-wave-selector">
-                  <button class="scope-btn active" data-wave="sine">SINE</button>
-                  <button class="scope-btn" data-wave="sawtooth">SAW</button>
-                  <button class="scope-btn" data-wave="square">SQR</button>
-                  <button class="scope-btn" data-wave="pulse">PULSE</button>
+                  <button class="scope-btn active" data-wave="sine" title="Pure smooth sine wave">SINE</button>
+                  <button class="scope-btn" data-wave="sawtooth" title="Bright rich sawtooth wave">SAW</button>
+                  <button class="scope-btn" data-wave="square" title="Crunchy 8-bit square wave">SQUARE</button>
+                  <button class="scope-btn" data-wave="triangle" title="Warm mellow triangle wave">TRIANGLE</button>
                 </div>
               </div>
             </div>

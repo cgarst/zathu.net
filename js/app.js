@@ -15,14 +15,32 @@
     historyIndex: -1,
   };
 
-  // Audio Context (initialized on first user interaction)
+  // Audio Engine State & Nodes
   let audioCtx = null;
+  let masterGain = null;
+  let masterAnalyser = null;
+  let ribbonOsc = null;
+  let ribbonGain = null;
+  let ribbonFilter = null;
+  let isRibbonPlaying = false;
 
   function initAudioContext() {
     if (!audioCtx) {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (AudioContextClass) {
         audioCtx = new AudioContextClass();
+
+        // Master Analyser Node (real-time time-domain waveform analysis)
+        masterAnalyser = audioCtx.createAnalyser();
+        masterAnalyser.fftSize = 1024;
+        masterAnalyser.smoothingTimeConstant = 0.82;
+
+        // Master Gain Node
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+
+        masterGain.connect(masterAnalyser);
+        masterAnalyser.connect(audioCtx.destination);
       }
     }
     if (audioCtx && audioCtx.state === 'suspended') {
@@ -30,44 +48,61 @@
     }
   }
 
-  // Play a synthesized note (analog / guitar string style)
-  function playSynthNote(freq, duration = 0.8, waveType = 'sawtooth') {
+  function enableSound() {
+    if (!state.audioEnabled) {
+      state.audioEnabled = true;
+      const soundToggle = document.getElementById('sound-toggle-btn');
+      if (soundToggle) {
+        soundToggle.classList.add('active');
+        soundToggle.innerHTML = '<i class="fa-solid fa-volume-high"></i> SOUND: ON';
+      }
+      localStorage.setItem('zathu_sound', 'enabled');
+    }
+    initAudioContext();
+  }
+
+  // Play a synthesized note using the currently selected waveform
+  function playSynthNote(freq, duration = 0.8, waveType = null) {
     if (!state.audioEnabled) return;
     initAudioContext();
-    if (!audioCtx) return;
+    if (!audioCtx || !masterGain) return;
 
     try {
+      const type = waveType || state.currentWaveform || 'sawtooth';
       const now = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
+      const noteGain = audioCtx.createGain();
       const filter = audioCtx.createBiquadFilter();
 
-      // Configure oscillator
-      osc.type = waveType;
+      osc.type = type;
       osc.frequency.setValueAtTime(freq, now);
 
-      // Warm analog low-pass filter
+      // Low-pass filter tailored per waveform for distinct character
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(freq * 4, now);
-      filter.frequency.exponentialRampToValueAtTime(Math.max(freq, 200), now + duration);
+      if (type === 'square') {
+        filter.frequency.setValueAtTime(freq * 3.5, now);
+        filter.frequency.exponentialRampToValueAtTime(Math.max(freq, 400), now + duration);
+      } else if (type === 'sawtooth') {
+        filter.frequency.setValueAtTime(freq * 5.5, now);
+        filter.frequency.exponentialRampToValueAtTime(Math.max(freq, 300), now + duration);
+      } else if (type === 'triangle') {
+        filter.frequency.setValueAtTime(freq * 4, now);
+      } else {
+        // sine
+        filter.frequency.setValueAtTime(freq * 8, now);
+      }
 
-      // Pluck / Synth Envelope
-      gainNode.gain.setValueAtTime(0.001, now);
-      gainNode.gain.linearRampToValueAtTime(0.28, now + 0.02);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      // Pluck Envelope
+      noteGain.gain.setValueAtTime(0.0001, now);
+      noteGain.gain.linearRampToValueAtTime(0.35, now + 0.02);
+      noteGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
-      // Connect graph
       osc.connect(filter);
-      filter.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
+      filter.connect(noteGain);
+      noteGain.connect(masterGain);
 
       osc.start(now);
-      osc.stop(now + duration);
-
-      // Trigger oscilloscope pulse
-      if (window.triggerScopePulse) {
-        window.triggerScopePulse(freq);
-      }
+      osc.stop(now + duration + 0.05);
     } catch (e) {
       console.warn('Audio playback error:', e);
     }
@@ -77,7 +112,7 @@
   function playClickBlip(type = 'blip') {
     if (!state.audioEnabled) return;
     initAudioContext();
-    if (!audioCtx) return;
+    if (!audioCtx || !masterGain) return;
 
     try {
       const now = audioCtx.currentTime;
@@ -87,49 +122,128 @@
       if (type === 'blip') {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(880, now);
-        osc.frequency.exponentialRampToValueAtTime(440, now + 0.06);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.05);
         gain.gain.setValueAtTime(0.08, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now);
-        osc.stop(now + 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
       } else if (type === 'high') {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(1200, now);
         gain.gain.setValueAtTime(0.06, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now);
-        osc.stop(now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
       }
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 0.05);
     } catch (e) {}
   }
 
   // Play an 8-bit chiptune arpeggio
   function playArpeggio() {
-    initAudioContext();
-    const notes = [261.63, 329.63, 392.0, 523.25, 659.25, 783.99]; // C major triad arpeggio
+    enableSound();
+    const notes = [261.63, 329.63, 392.0, 523.25, 659.25, 783.99]; // C major arpeggio
     notes.forEach((freq, idx) => {
       setTimeout(() => {
-        playSynthNote(freq, 0.35, 'square');
+        playSynthNote(freq, 0.35, state.currentWaveform || 'square');
       }, idx * 75);
     });
   }
 
-  // Guitar Tuning Frequencies for the 6-String Jam Fretboard
-  const GUITAR_STRINGS = [
-    { note: 'E2', freq: 82.41, label: 'E (6th)' },
-    { note: 'A2', freq: 110.0, label: 'A (5th)' },
-    { note: 'D3', freq: 146.83, label: 'D (4th)' },
-    { note: 'G3', freq: 196.0, label: 'G (3rd)' },
-    { note: 'B3', freq: 246.94, label: 'B (2nd)' },
-    { note: 'E4', freq: 329.63, label: 'e (1st)' }
-  ];
+  // Interactive continuous tone when clicking/dragging on the oscilloscope canvas
+  function startRibbonTone(x, y, width, height) {
+    enableSound();
+    if (!audioCtx || !masterGain) return;
+
+    stopRibbonTone();
+
+    try {
+      const now = audioCtx.currentTime;
+      ribbonOsc = audioCtx.createOscillator();
+      ribbonGain = audioCtx.createGain();
+      ribbonFilter = audioCtx.createBiquadFilter();
+
+      ribbonOsc.type = state.currentWaveform || 'sine';
+
+      // Map X (0..width) to frequency (110Hz A2 to 880Hz A5)
+      const minFreq = 110;
+      const maxFreq = 880;
+      const clampedX = Math.max(0, Math.min(width, x));
+      const freq = minFreq * Math.pow(maxFreq / minFreq, clampedX / width);
+
+      // Map Y (height..0) to filter cutoff (300Hz to 6000Hz)
+      const clampedY = Math.max(0, Math.min(height, y));
+      const cutoff = 300 + (1 - clampedY / height) * 5700;
+
+      ribbonOsc.frequency.setValueAtTime(freq, now);
+      ribbonFilter.type = 'lowpass';
+      ribbonFilter.frequency.setValueAtTime(cutoff, now);
+
+      ribbonGain.gain.setValueAtTime(0.0001, now);
+      ribbonGain.gain.linearRampToValueAtTime(0.3, now + 0.04);
+
+      ribbonOsc.connect(ribbonFilter);
+      ribbonFilter.connect(ribbonGain);
+      ribbonGain.connect(masterGain);
+
+      ribbonOsc.start(now);
+      isRibbonPlaying = true;
+
+      updateScopeStatus(freq, cutoff);
+    } catch (e) {
+      console.warn('Ribbon tone error:', e);
+    }
+  }
+
+  function updateRibbonTone(x, y, width, height) {
+    if (!isRibbonPlaying || !ribbonOsc || !audioCtx) return;
+
+    const now = audioCtx.currentTime;
+    const minFreq = 110;
+    const maxFreq = 880;
+    const clampedX = Math.max(0, Math.min(width, x));
+    const freq = minFreq * Math.pow(maxFreq / minFreq, clampedX / width);
+
+    const clampedY = Math.max(0, Math.min(height, y));
+    const cutoff = 300 + (1 - clampedY / height) * 5700;
+
+    ribbonOsc.frequency.setTargetAtTime(freq, now, 0.02);
+    ribbonFilter.frequency.setTargetAtTime(cutoff, now, 0.02);
+
+    updateScopeStatus(freq, cutoff);
+  }
+
+  function stopRibbonTone() {
+    if (!isRibbonPlaying || !ribbonGain || !audioCtx) {
+      isRibbonPlaying = false;
+      return;
+    }
+    try {
+      const now = audioCtx.currentTime;
+      ribbonGain.gain.linearRampToValueAtTime(0.0001, now + 0.06);
+      if (ribbonOsc) {
+        ribbonOsc.stop(now + 0.08);
+      }
+    } catch (e) {}
+    isRibbonPlaying = false;
+    resetScopeStatus();
+  }
+
+  function updateScopeStatus(freq, cutoff) {
+    const statusEl = document.getElementById('scope-status-text');
+    if (statusEl) {
+      statusEl.innerHTML = `<span style="color: var(--neon-cyan); font-weight: 700;">FREQ: ${Math.round(freq)} Hz</span> &bull; <span style="color: var(--neon-amber);">CUTOFF: ${Math.round(cutoff)} Hz</span> &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
+    }
+  }
+
+  function resetScopeStatus() {
+    const statusEl = document.getElementById('scope-status-text');
+    if (statusEl) {
+      statusEl.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> CLICK & DRAG SCREEN TO PLAY TONE &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
+    }
+  }
 
   /* ==========================================================================
-     OSCILLOSCOPE CANVAS VISUALIZER
+     REAL-TIME OSCILLOSCOPE CANVAS (AUDIO-REACTIVE)
      ========================================================================== */
   function initOscilloscope() {
     const canvas = document.getElementById('oscilloscope-canvas');
@@ -147,27 +261,57 @@
     });
 
     let phase = 0;
-    let frequencyMod = 0.025;
-    let amplitudeMod = 45;
-    let pulseFactor = 0;
+    let isMouseDownOnCanvas = false;
+    const analyserBuffer = new Uint8Array(1024);
 
-    // Pulse trigger
-    window.triggerScopePulse = function (freq) {
-      pulseFactor = Math.min(60, freq * 0.15);
-    };
-
-    // Canvas Mouse Interaction
-    canvas.addEventListener('mousemove', (e) => {
+    // Canvas Mouse & Touch Interaction (Acts as an interactive synth pad)
+    canvas.addEventListener('mousedown', (e) => {
+      isMouseDownOnCanvas = true;
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      frequencyMod = 0.01 + (x / width) * 0.06;
-      amplitudeMod = 20 + ((height - y) / height) * 55;
+      startRibbonTone(x, y, width, height);
     });
 
-    canvas.addEventListener('mouseleave', () => {
-      frequencyMod = 0.025;
-      amplitudeMod = 45;
+    window.addEventListener('mousemove', (e) => {
+      if (!isMouseDownOnCanvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      updateRibbonTone(x, y, width, height);
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isMouseDownOnCanvas) {
+        isMouseDownOnCanvas = false;
+        stopRibbonTone();
+      }
+    });
+
+    // Touch support for mobile / tablets
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      isMouseDownOnCanvas = true;
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      startRibbonTone(x, y, width, height);
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      if (!isMouseDownOnCanvas) return;
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      updateRibbonTone(x, y, width, height);
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => {
+      isMouseDownOnCanvas = false;
+      stopRibbonTone();
     });
 
     function drawGrid() {
@@ -204,50 +348,73 @@
 
       drawGrid();
 
-      // Render glowing wave
+      // Determine glow color based on waveform
+      let waveColor = '#00f0ff';
+      if (state.currentWaveform === 'square') waveColor = '#10b981';
+      else if (state.currentWaveform === 'sawtooth') waveColor = '#fbbf24';
+      else if (state.currentWaveform === 'triangle') waveColor = '#c084fc';
+
       ctx.lineWidth = 2.5;
-      ctx.strokeStyle = '#00f0ff';
+      ctx.strokeStyle = waveColor;
       ctx.shadowBlur = 12;
-      ctx.shadowColor = '#00f0ff';
+      ctx.shadowColor = waveColor;
 
       ctx.beginPath();
 
-      const centerY = height / 2;
-      const totalPoints = width;
-      const currentAmp = amplitudeMod + pulseFactor;
-
-      for (let x = 0; x < totalPoints; x += 2) {
-        let y = centerY;
-        const angle = x * frequencyMod + phase;
-
-        if (state.currentWaveform === 'sine') {
-          y = centerY + Math.sin(angle) * currentAmp * Math.sin(x * 0.005 + phase * 0.4);
-        } else if (state.currentWaveform === 'sawtooth') {
-          y = centerY + ((angle % (Math.PI * 2)) / Math.PI - 1) * currentAmp;
-        } else if (state.currentWaveform === 'square') {
-          y = centerY + (Math.sin(angle) >= 0 ? currentAmp * 0.75 : -currentAmp * 0.75);
-        } else if (state.currentWaveform === 'pulse') {
-          y = centerY + (Math.sin(angle) > 0.6 ? currentAmp : -currentAmp * 0.3);
+      // Check if real audio is flowing through masterAnalyser
+      let hasAudioSignal = false;
+      if (masterAnalyser) {
+        masterAnalyser.getByteTimeDomainData(analyserBuffer);
+        for (let i = 0; i < analyserBuffer.length; i += 8) {
+          if (Math.abs(analyserBuffer[i] - 128) > 2) {
+            hasAudioSignal = true;
+            break;
+          }
         }
+      }
 
-        if (x === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
+      if (hasAudioSignal) {
+        // Draw real physical waveform from Web Audio analyser
+        const sliceWidth = width / analyserBuffer.length;
+        let x = 0;
+        for (let i = 0; i < analyserBuffer.length; i++) {
+          const v = analyserBuffer[i] / 128.0;
+          const y = (v * height) / 2;
+
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+
+          x += sliceWidth;
+        }
+      } else {
+        // Standby guide wave reflecting selected waveform shape
+        const centerY = height / 2;
+        const amp = 22;
+        const freq = 0.035;
+
+        for (let x = 0; x < width; x += 2) {
+          let y = centerY;
+          const angle = x * freq + phase;
+
+          if (state.currentWaveform === 'sine') {
+            y = centerY + Math.sin(angle) * amp;
+          } else if (state.currentWaveform === 'sawtooth') {
+            y = centerY + ((angle % (Math.PI * 2)) / Math.PI - 1) * amp;
+          } else if (state.currentWaveform === 'square') {
+            y = centerY + (Math.sin(angle) >= 0 ? amp * 0.75 : -amp * 0.75);
+          } else if (state.currentWaveform === 'triangle') {
+            y = centerY + (Math.asin(Math.sin(angle)) / (Math.PI / 2)) * amp;
+          }
+
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
         }
       }
 
       ctx.stroke();
-      ctx.shadowBlur = 0; // reset
+      ctx.shadowBlur = 0;
 
-      // Dampen pulse factor
-      if (pulseFactor > 0.1) {
-        pulseFactor *= 0.92;
-      } else {
-        pulseFactor = 0;
-      }
-
-      phase += 0.07;
+      phase += 0.05;
       requestAnimationFrame(render);
     }
 
@@ -264,7 +431,8 @@
 
       key.addEventListener('mousedown', () => {
         key.classList.add('key-pressed');
-        playSynthNote(freq, 0.8, 'sawtooth');
+        enableSound();
+        playSynthNote(freq, 0.8);
       });
 
       window.addEventListener('mouseup', () => {
@@ -275,7 +443,8 @@
       key.addEventListener('touchstart', (e) => {
         e.preventDefault();
         key.classList.add('key-pressed');
-        playSynthNote(freq, 0.8, 'sawtooth');
+        enableSound();
+        playSynthNote(freq, 0.8);
       });
       key.addEventListener('touchend', () => {
         key.classList.remove('key-pressed');
@@ -284,7 +453,6 @@
 
     // Keyboard Hotkeys 1-6
     window.addEventListener('keydown', (e) => {
-      // Ignore if typing inside terminal or an input
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
 
       const num = parseInt(e.key, 10);
@@ -293,7 +461,8 @@
         if (keyEl) {
           keyEl.classList.add('key-pressed');
           const freq = parseFloat(keyEl.getAttribute('data-freq'));
-          playSynthNote(freq, 0.8, 'sawtooth');
+          enableSound();
+          playSynthNote(freq, 0.8);
           setTimeout(() => keyEl.classList.remove('key-pressed'), 200);
         }
       }
@@ -364,7 +533,9 @@
         waveBtns.forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
         state.currentWaveform = btn.getAttribute('data-wave');
-        playClickBlip('high');
+        enableSound();
+        playSynthNote(329.63, 0.5, state.currentWaveform);
+        resetScopeStatus();
       });
     });
   }
