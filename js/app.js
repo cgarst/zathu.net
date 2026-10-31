@@ -659,12 +659,12 @@ All repos: https://github.com/cgarst?tab=repositories`
                   owner: 'cgarst',
                   group: 'zathu',
                   date: 'Oct 30 20:02',
-                  size: 890,
-                  content: `=== ZATHU SOFTWARE MANIFESTO ===
-1. Zero venture capital fluff. No artificial growth hacks.
-2. No trackers, no ad beacons, no surveillance capitalism.
-3. Local-first always. If the internet goes down, software must still function.
-4. Open source craft rooted in real musician, hacker, and gamer culture.`
+                  size: 580,
+                  content: `=== ZATHU SOFTWARE ===
+1. Independent open-source tools made for personal use and shared freely.
+2. Local-first architecture: tools should work offline without external dependencies.
+3. Clean, lightweight code built using open web and unix standards.
+4. Focused utilities for musicians, gamers, and self-hosters.`
                 },
                 'contact.txt': {
                   type: 'file',

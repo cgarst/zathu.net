@@ -19,12 +19,12 @@ Deployed seamlessly under **GitHub Pages**.
 
 ## ⚡ Design System & Features
 
-- **Distinctive Cyber-Hardware Aesthetic**: Styled like an analog rack synthesizer / cyberdeck terminal, ditching generic AI landing page templates.
+- **Cyber-Hardware Aesthetic**: Inspired by analog rack gear, synthesizers, and vintage terminal interfaces.
 - **Interactive Oscilloscope Canvas**: Real-time waveform visualizer (Sine, Sawtooth, Square, Pulse) reacting to cursor movement and audio clicks.
 - **Web Audio 6-String Jam Fretboard**: Playable guitar strings (E-A-D-G-B-e) directly in the browser via Web Audio synthesizer with hotkeys `[1]` through `[6]`.
-- **Integrated Terminal (`zathu-sh`)**: Working command-line shell prompt with command history, autocompletion, and queries (`projects`, `lan`, `music`, `synth`, `theme`, etc.).
-- **Retro Hardware Controls**: Instant CRT phosphor scanlines toggle and synthesized audio soundboard toggle.
-- **Zero Heavy Frameworks**: Pure vanilla HTML5, CSS3, and JavaScript with 0 tracking telemetry and ultra-fast load times.
+- **Integrated Linux Terminal (`zathu-sh`)**: Working command-line shell with virtual filesystem, core utilities (`ls`, `pwd`, `cd`, `cat`, `neofetch`), and tab autocompletion.
+- **Hardware Mode Controls**: CRT phosphor scanlines toggle and synthesized audio soundboard toggle.
+- **Vanilla Web Stack**: Pure HTML5, CSS3, and JavaScript for fast load times and zero build dependencies.
 
 ---
 
