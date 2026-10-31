@@ -213,6 +213,77 @@
     }
   }
 
+  // Active sustained voices for held number keys / buttons (polyphonic)
+  const activeKeyVoices = {};
+
+  function startNoteVoice(keyId, freq, el = null) {
+    enableSound();
+    if (!audioCtx || !masterGain) return;
+
+    // Avoid duplicating voice if already held
+    if (activeKeyVoices[keyId]) return;
+
+    try {
+      const type = state.currentWaveform || 'sine';
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+
+      filter.type = 'lowpass';
+      if (type === 'square') {
+        filter.frequency.setValueAtTime(freq * 3.5, now);
+      } else if (type === 'sawtooth') {
+        filter.frequency.setValueAtTime(freq * 5.5, now);
+      } else if (type === 'triangle') {
+        filter.frequency.setValueAtTime(freq * 4, now);
+      } else {
+        filter.frequency.setValueAtTime(freq * 8, now);
+      }
+
+      // Attack & Sustain: holds continuous tone while key is pressed
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.35, now + 0.018);
+      gain.gain.linearRampToValueAtTime(0.28, now + 0.07);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+
+      osc.start(now);
+
+      if (el) el.classList.add('key-pressed');
+
+      activeKeyVoices[keyId] = { osc, gain, filter, el };
+    } catch (e) {
+      console.warn('Start note voice error:', e);
+    }
+  }
+
+  function stopNoteVoice(keyId) {
+    const voice = activeKeyVoices[keyId];
+    if (!voice || !audioCtx) return;
+
+    try {
+      const now = audioCtx.currentTime;
+      voice.gain.gain.cancelScheduledValues(now);
+      voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
+      // Quick musical release fade out (0.09s)
+      voice.gain.gain.linearRampToValueAtTime(0.0001, now + 0.09);
+      voice.osc.stop(now + 0.11);
+    } catch (e) {}
+
+    if (voice.el) voice.el.classList.remove('key-pressed');
+    delete activeKeyVoices[keyId];
+  }
+
+  function stopAllNoteVoices() {
+    Object.keys(activeKeyVoices).forEach((id) => stopNoteVoice(id));
+  }
+
   // UI Micro-click sound
   function playClickBlip(type = 'blip') {
     if (!state.audioEnabled) return;
@@ -721,6 +792,7 @@
 
     function renderNumberButtons() {
       if (!container) return;
+      stopAllNoteVoices();
       container.innerHTML = '';
 
       const modeKey = state.currentMode || 'minor_pentatonic';
@@ -746,27 +818,33 @@
           <span class="synth-key-shortcut">[${shortcut}]</span>
         `;
 
-        // Click / Mouse input
-        btn.addEventListener('mousedown', () => {
-          btn.classList.add('key-pressed');
-          enableSound();
-          playSynthNote(freq, 0.85);
+        // Mouse click & hold: sustains note while held, fades out on release
+        btn.addEventListener('mousedown', (e) => {
+          if (e.button !== 0) return;
+          startNoteVoice(shortcut, freq, btn);
         });
 
-        window.addEventListener('mouseup', () => {
-          btn.classList.remove('key-pressed');
+        btn.addEventListener('mouseup', () => {
+          stopNoteVoice(shortcut);
         });
 
-        // Touch for mobile
+        btn.addEventListener('mouseleave', () => {
+          stopNoteVoice(shortcut);
+        });
+
+        // Touch for mobile / tablet
         btn.addEventListener('touchstart', (e) => {
           e.preventDefault();
-          btn.classList.add('key-pressed');
-          enableSound();
-          playSynthNote(freq, 0.85);
+          startNoteVoice(shortcut, freq, btn);
         }, { passive: false });
 
-        btn.addEventListener('touchend', () => {
-          btn.classList.remove('key-pressed');
+        btn.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          stopNoteVoice(shortcut);
+        });
+
+        btn.addEventListener('touchcancel', () => {
+          stopNoteVoice(shortcut);
         });
 
         container.appendChild(btn);
@@ -798,25 +876,35 @@
         }
 
         renderNumberButtons();
-        // No automatic playback! Only manual click or keyboard 1-8.
       });
     });
 
-    // Keyboard Hotkeys 1-8
+    // Keyboard Hotkeys 1-8: Hold note while key is pressed down, quick fade out when released
     window.addEventListener('keydown', (e) => {
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (e.repeat) return; // Ignore auto-repeat key events to hold steady sustain
 
-      const num = parseInt(e.key, 10);
-      if (num >= 1 && num <= 8) {
+      const num = e.key;
+      if (num >= '1' && num <= '8') {
         const keyEl = container.querySelector(`.synth-key[data-key="${num}"]`);
         if (keyEl) {
-          keyEl.classList.add('key-pressed');
           const freq = parseFloat(keyEl.getAttribute('data-freq'));
-          enableSound();
-          playSynthNote(freq, 0.85);
-          setTimeout(() => keyEl.classList.remove('key-pressed'), 200);
+          startNoteVoice(num, freq, keyEl);
         }
       }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+      const num = e.key;
+      if (num >= '1' && num <= '8') {
+        stopNoteVoice(num);
+      }
+    });
+
+    window.addEventListener('blur', () => {
+      stopAllNoteVoices();
     });
 
     // Global hooks for terminal commands
