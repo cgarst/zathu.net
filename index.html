@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Zathu Software | Indie Dev Lab for Musicians, Hackers & Gamers</title>
+  
+  <meta name="description" content="Zathu Software is an independent open-source lab crafting software for guitarists, concert-goers, LAN gamers, and hackers. Home of MajesticTab, Setlore, LAN scripts, and hackable utilities.">
+  <meta name="keywords" content="Zathu Software, MajesticTab, Setlore, guitar tabs, open source, LAN party scripts, cod4, cod5, quake 3, indie developer, cgarst">
+  <meta name="author" content="cgarst">
+  <meta name="theme-color" content="#07090e">
+
+  <!-- Open Graph / Social Cards -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://zathu.net/">
+  <meta property="og:title" content="Zathu Software | Indie Dev for Musicians, Hackers & Gamers">
+  <meta property="og:description" content="Independent open-source lab crafting local-first tools for guitarists, gig-goers, LAN party warriors, and hackers.">
+  <meta property="og:image" content="https://majestictab.zathu.net/img/screenshots/gp_scroll.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Zathu Software | Indie Dev for Musicians, Hackers & Gamers">
+  <meta name="twitter:description" content="Independent open-source lab crafting local-first tools for guitarists, gig-goers, LAN party warriors, and hackers.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="alternate icon" href="assets/favicon.svg">
+
+  <!-- Google Fonts: Space Grotesk, JetBrains Mono, Chakra Petch -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- CRT Scanline Overlay -->
+  <div class="crt-overlay" aria-hidden="true"></div>
+
+  <!-- Toast Notification Box -->
+  <div id="toast-notice" class="toast-notice" role="alert">
+    <i class="fa-solid fa-check"></i>
+    <span class="toast-msg">COPIED TO CLIPBOARD</span>
+  </div>
+
+  <!-- Top Telemetry & Hardware Control Bar -->
+  <div class="top-telemetry-strip">
+    <div class="container telemetry-inner">
+      <div class="telemetry-left">
+        <span class="status-indicator">
+          <span class="status-dot"></span>
+          SYS.STATUS: NOMINAL
+        </span>
+        <span>NODE: ZATHU_HQ</span>
+        <span>CARRIER: 44.1kHz / 24-BIT</span>
+      </div>
+      <div class="telemetry-right">
+        <button id="crt-toggle-btn" class="hardware-toggle-btn" title="Toggle retro CRT phosphor scanlines">
+          <i class="fa-solid fa-tv"></i> CRT PHOSPHOR: OFF
+        </button>
+        <button id="sound-toggle-btn" class="hardware-toggle-btn" title="Toggle 8-bit / Synth sound effects">
+          <i class="fa-solid fa-volume-xmark"></i> SOUND: OFF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Site Navigation Header -->
+  <header class="site-header">
+    <div class="container nav-inner">
+      <a href="#" class="brand-wrapper" title="Zathu Software Homepage">
+        <img src="assets/zathu-logo.svg" alt="Zathu Software Logo" class="brand-logo-img">
+      </a>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="#flagship" class="nav-link"><i class="fa-solid fa-layer-group"></i> Flagship Apps</a></li>
+          <li><a href="#lan-vault" class="nav-link"><i class="fa-solid fa-network-wired"></i> LAN Vault</a></li>
+          <li><a href="#terminal-sh" class="nav-link"><i class="fa-solid fa-terminal"></i> Terminal</a></li>
+          <li><a href="#philosophy" class="nav-link"><i class="fa-solid fa-microchip"></i> Philosophy</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="https://github.com/cgarst/" target="_blank" rel="noopener noreferrer" class="btn-github">
+          <i class="fa-brands fa-github"></i>
+          <span>cgarst</span>
+          <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.7rem; opacity: 0.7;"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section with Oscilloscope & Jam Synth -->
+  <section class="hero-section" id="hero">
+    <div class="container">
+      <div class="hero-grid">
+        
+        <!-- Left: Hero Text & Call to Actions -->
+        <div class="hero-content">
+          <div class="hero-pill-tag">
+            <i class="fa-solid fa-sliders"></i>
+            <span>INDIE DEV LAB // 100% OPEN SOURCE</span>
+          </div>
+
+          <h1 class="hero-title">
+            Crafted for <br>
+            <span class="hero-title-gradient">Musicians, Hackers & Gamers.</span>
+          </h1>
+
+          <p class="hero-subtitle">
+            Zero venture capital fluff. No tracking spyware. Just high-voltage, local-first tools engineered for guitar amps, 3 AM LAN parties, and midnight terminal sessions.
+          </p>
+
+          <div class="hero-action-row">
+            <a href="#flagship" class="btn-primary">
+              <i class="fa-solid fa-bolt"></i>
+              <span>Explore Projects</span>
+            </a>
+            <a href="#terminal-sh" class="btn-secondary">
+              <i class="fa-solid fa-terminal"></i>
+              <span>Launch Terminal &gt;_</span>
+            </a>
+          </div>
+
+          <!-- Quick Hardware Spec Matrix -->
+          <div class="hero-stats-row">
+            <div class="stat-item">
+              <span class="stat-val">100%</span>
+              <span class="stat-label">Open Source</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-val">0</span>
+              <span class="stat-label">Trackers & Ads</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-val">LOCAL</span>
+              <span class="stat-label">First Architecture</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-val">GPL / MIT</span>
+              <span class="stat-label">Free Software</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Hardware Chassis with Interactive Oscilloscope & Jam Synth -->
+        <div class="hero-hardware-panel">
+          <div class="hardware-chassis-card">
+            
+            <div class="hardware-rack-header">
+              <div class="rack-header-left">
+                <div class="rack-screw"></div>
+                <span class="rack-title">OSCILLOSCOPE &bull; CH-01</span>
+              </div>
+              <div class="rack-header-right">
+                <div class="led-cluster">
+                  <span class="led led-cyan" title="Audio In"></span>
+                  <span class="led led-magenta" title="Carrier Sync"></span>
+                  <span class="led led-green" title="Output Ready"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Canvas Visualizer Screen -->
+            <div class="oscilloscope-screen-wrapper">
+              <canvas id="oscilloscope-canvas" class="oscilloscope-canvas" width="460" height="180"></canvas>
+              
+              <div class="oscilloscope-meta">
+                <span>INTERACTIVE WAVEFORM GENERATOR</span>
+                <div class="scope-wave-selector">
+                  <button class="scope-btn active" data-wave="sine">SINE</button>
+                  <button class="scope-btn" data-wave="sawtooth">SAW</button>
+                  <button class="scope-btn" data-wave="square">SQR</button>
+                  <button class="scope-btn" data-wave="pulse">PULSE</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Interactive 6-String Jam Fretboard Controls -->
+            <div class="synth-bar-controls">
+              <div class="synth-bar-title">
+                <span><i class="fa-solid fa-guitar" style="color: var(--neon-cyan);"></i> GUITAR STRING SYNTH (CLICK OR KEYS 1-6)</span>
+                <span style="color: var(--neon-emerald); font-size: 0.7rem;">TUNING: EADGBe</span>
+              </div>
+              <div class="synth-keys-grid">
+                <button class="synth-key" data-freq="82.41" data-key="1" title="Low E (82.4 Hz)">
+                  <span class="synth-note-name">E2</span>
+                  <span class="synth-key-shortcut">[1]</span>
+                </button>
+                <button class="synth-key" data-freq="110.0" data-key="2" title="A (110.0 Hz)">
+                  <span class="synth-note-name">A2</span>
+                  <span class="synth-key-shortcut">[2]</span>
+                </button>
+                <button class="synth-key" data-freq="146.83" data-key="3" title="D (146.8 Hz)">
+                  <span class="synth-note-name">D3</span>
+                  <span class="synth-key-shortcut">[3]</span>
+                </button>
+                <button class="synth-key" data-freq="196.0" data-key="4" title="G (196.0 Hz)">
+                  <span class="synth-note-name">G3</span>
+                  <span class="synth-key-shortcut">[4]</span>
+                </button>
+                <button class="synth-key" data-freq="246.94" data-key="5" title="B (246.9 Hz)">
+                  <span class="synth-note-name">B3</span>
+                  <span class="synth-key-shortcut">[5]</span>
+                </button>
+                <button class="synth-key" data-freq="329.63" data-key="6" title="High e (329.6 Hz)">
+                  <span class="synth-note-name">E4</span>
+                  <span class="synth-key-shortcut">[6]</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Flagship Software Showcase -->
+  <section class="section" id="flagship">
+    <div class="container">
+      
+      <div class="section-header">
+        <div class="section-label">
+          <i class="fa-solid fa-star"></i>
+          <span>PRIMARY ARTIFACTS</span>
+        </div>
+        <h2 class="section-title">Flagship Open Source Work</h2>
+        <p class="section-desc">
+          Crafted to solve concrete daily problems — from mastering guitar fretboards to archiving tour setlists and beating music recommendation fatigue.
+        </p>
+      </div>
+
+      <div class="flagship-grid">
+
+        <!-- Project 1: MajesticTab -->
+        <article class="project-card project-card-majestictab">
+          <div class="project-info">
+            <div>
+              <div class="project-badge-row">
+                <span class="badge badge-cyan">LIVE WEB APP</span>
+                <span class="badge badge-purple">GUITAR PRO 3-7</span>
+                <span class="badge badge-emerald">STEAM DECK READY</span>
+                <span class="badge badge-amber">LOCAL JAM MODE</span>
+              </div>
+              <h3 class="project-title">MajesticTab</h3>
+              <p class="project-tagline">Focused Guitar Tab Reader & Practice Studio</p>
+              <p class="project-description">
+                A blazingly fast, ad-free guitar tab viewer engineered for serious practice sessions. Open Guitar Pro (.gp3/.gp4/.gp5/.gpx), PDF, and text tabs with synthesized playback across every track, an interactive virtual fretboard, real-time tuner, and multi-device jam mode over your local network. Free forever with zero subscriptions.
+              </p>
+              <ul class="project-feature-list">
+                <li class="project-feature-item">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Full Guitar Pro audio synthesis</span>
+                </li>
+                <li class="project-feature-item">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Synchronized virtual fretboard</span>
+                </li>
+                <li class="project-feature-item">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Local network Jam Mode</span>
+                </li>
+                <li class="project-feature-item">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Zero trackers, zero paywalls</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="project-card-actions">
+              <a href="https://majestictab.zathu.net/" target="_blank" rel="noopener noreferrer" class="btn-card-launch">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <span>Launch MajesticTab</span>
+              </a>
+              <a href="https://github.com/cgarst/MajesticTab" target="_blank" rel="noopener noreferrer" class="btn-card-code">
+                <i class="fa-brands fa-github"></i>
+                <span>View Source</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Interactive Fretboard Visualizer Panel -->
+          <div class="project-visual-panel">
+            <div class="fretboard-mockup">
+              <div class="mockup-fretboard-header">
+                <span><i class="fa-solid fa-sliders"></i> TRACK 01: LEAD GUITAR</span>
+                <span>TUNING: E STANDARD</span>
+              </div>
+
+              <!-- Animated Fretboard Lines -->
+              <div class="guitar-fretboard-wire">
+                <div class="fret-vertical-bars">
+                  <div class="fret-bar"></div>
+                  <div class="fret-bar"></div>
+                  <div class="fret-bar"></div>
+                  <div class="fret-bar"></div>
+                  <div class="fret-bar"></div>
+                  <div class="fret-bar"></div>
+                </div>
+                <div class="guitar-string">
+                  <div class="fret-marker" style="left: 68%;"></div>
+                </div>
+                <div class="guitar-string">
+                  <div class="fret-marker" style="left: 42%;"></div>
+                </div>
+                <div class="guitar-string">
+                  <div class="fret-marker" style="left: 85%;"></div>
+                </div>
+                <div class="guitar-string"></div>
+                <div class="guitar-string">
+                  <div class="fret-marker" style="left: 25%;"></div>
+                </div>
+                <div class="guitar-string"></div>
+              </div>
+
+              <!-- Live Tab Snippet -->
+              <div class="tab-snippet">e|---12h15p12-------12--17~---|
+B|-15---------15-13-----------|
+G|----------------------------|
+D|----------------------------|
+A|----------------------------|
+E|----------------------------|</div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Project 2: Setlore -->
+        <article class="project-card project-card-setlore">
+          <div class="project-info">
+            <div>
+              <div class="project-badge-row">
+                <span class="badge badge-purple">LIVE PLATFORM</span>
+                <span class="badge badge-cyan">SELF-HOSTABLE</span>
+                <span class="badge badge-emerald">CONCERT ARCHIVE</span>
+                <span class="badge badge-magenta">PWA SUPPORT</span>
+              </div>
+              <h3 class="project-title">Setlore</h3>
+              <p class="project-tagline">Self-Hosted Live Concert & Setlist Analytics</p>
+              <p class="project-description">
+                A private, self-hosted vault for concert-goers and touring bands. Archive live gig histories, track tour debuts, analyze setlist song rotation frequencies, and visualize venue journeys without relying on proprietary third-party platforms that monetize your gig memories.
+              </p>
+              <ul class="project-feature-list">
+                <li class="project-feature-item">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Live setlist & tour statistics</span>
+                </li>
+                <li class="project-feature-item">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Song debut & rarity frequency</span>
+                </li>
+                <li class="project-feature-item">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Venue mapping & gig history</span>
+                </li>
+                <li class="project-feature-item">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Self-hosted data sovereignty</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="project-card-actions">
+              <a href="https://setlore.zathu.net/" target="_blank" rel="noopener noreferrer" class="btn-card-launch" style="background: var(--neon-purple); color: #fff;">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <span>Open Setlore</span>
+              </a>
+              <a href="https://github.com/cgarst" target="_blank" rel="noopener noreferrer" class="btn-card-code">
+                <i class="fa-brands fa-github"></i>
+                <span>Developer Profile</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Setlore Visual Stage Mockup -->
+          <div class="project-visual-panel">
+            <div class="setlore-mockup">
+              <div class="mockup-fretboard-header" style="color: #c084fc;">
+                <span><i class="fa-solid fa-chart-simple"></i> TOUR FREQUENCY METRICS</span>
+                <span>48 SHOWS ARCHIVED</span>
+              </div>
+
+              <!-- Animated Stage Analytics Bars -->
+              <div class="concert-analytics-bars">
+                <div class="analytics-col" style="height: 45%;" title="Opener track"></div>
+                <div class="analytics-col" style="height: 80%;" title="Core staple"></div>
+                <div class="analytics-col" style="height: 60%;" title="Fan favorite"></div>
+                <div class="analytics-col" style="height: 95%;" title="Encore anthem"></div>
+                <div class="analytics-col" style="height: 35%;" title="Tour debut"></div>
+                <div class="analytics-col" style="height: 70%;" title="Acoustic interlude"></div>
+                <div class="analytics-col" style="height: 90%;" title="Closer"></div>
+              </div>
+
+              <div class="tab-snippet" style="color: #c084fc; border-color: rgba(168, 85, 247, 0.2);">TOUR: NORTH AMERICAN LEG // 2026
+VENUE: THE FILLMORE &bull; CAP: 2,500
+AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Project 3: Random Album for YouTube Music -->
+        <article class="project-card project-card-ytm">
+          <div class="project-info">
+            <div>
+              <div class="project-badge-row">
+                <span class="badge badge-magenta">BROWSER EXTENSION</span>
+                <span class="badge badge-amber">USERSCRIPT</span>
+                <span class="badge badge-cyan">GPL-3.0</span>
+                <span class="badge badge-emerald">ALBUM PURIST</span>
+              </div>
+              <h3 class="project-title">Random Album for YouTube Music</h3>
+              <p class="project-tagline">Bust Out of Algorithmic Playlist Fatigue</p>
+              <p class="project-description">
+                Modern streaming algorithms push listeners into homogenous infinite-repeat bubbles. This lightweight extension and script introduces true album-level serendipity into your YouTube Music library, letting you spin full, cohesive LP experiences at random directly from your saved albums collection.
+              </p>
+              <ul class="project-feature-list">
+                <li class="project-feature-item">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Instant 1-click album shuffle</span>
+                </li>
+                <li class="project-feature-item">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Zero telemetry or data tracking</span>
+                </li>
+                <li class="project-feature-item">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Respects album artist intent</span>
+                </li>
+                <li class="project-feature-item">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Pure vanilla JavaScript, lightweight</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="project-card-actions">
+              <a href="https://github.com/cgarst/random-album-for-youtube-music" target="_blank" rel="noopener noreferrer" class="btn-card-launch" style="background: var(--neon-magenta); color: #fff;">
+                <i class="fa-brands fa-github"></i>
+                <span>Get Extension / Repo</span>
+              </a>
+              <a href="https://github.com/cgarst?tab=repositories" target="_blank" rel="noopener noreferrer" class="btn-card-code">
+                <i class="fa-solid fa-cubes"></i>
+                <span>More Audio Utilities</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- YTM Visual Vinyl Mockup -->
+          <div class="project-visual-panel">
+            <div class="ytm-mockup">
+              <div class="vinyl-record">
+                <div class="vinyl-center">
+                  <div class="vinyl-hole"></div>
+                </div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 0.82rem; color: #f472b6; font-weight: 700;">
+                <i class="fa-solid fa-shuffle"></i> SHUFFLING LIBRARY...
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem;">
+                SELECTING COMPLETE UNCOMPRESSED ALBUM
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- LAN Party Vault & Game Scripts -->
+  <section class="section lan-vault-section" id="lan-vault">
+    <div class="container">
+      
+      <div class="section-header">
+        <div class="section-label">
+          <i class="fa-solid fa-ethernet"></i>
+          <span>LOCAL NETWORK WARFARE</span>
+        </div>
+        <h2 class="section-title">The LAN Party Scripts Vault</h2>
+        <p class="section-desc">
+          Because the purest multiplayer experience is 12 PCs in a room connected with cat5 cables, pizza boxes, zero internet dependencies, and single-digit ping.
+        </p>
+      </div>
+
+      <!-- Tabbed LAN Console -->
+      <div class="lan-terminal-container">
+        
+        <nav class="lan-nav-tabs" aria-label="LAN Party Script Repositories">
+          <button class="lan-tab-btn active" data-tab="tab-cod4">
+            <i class="fa-solid fa-crosshairs"></i> lanscript-cod4
+          </button>
+          <button class="lan-tab-btn" data-tab="tab-cod5">
+            <i class="fa-solid fa-gun"></i> lanscript-cod5 (WaW)
+          </button>
+          <button class="lan-tab-btn" data-tab="tab-q3">
+            <i class="fa-solid fa-skull"></i> lanscript-quake3
+          </button>
+          <button class="lan-tab-btn" data-tab="tab-reclaimer">
+            <i class="fa-solid fa-ring"></i> reclaimer-lan (Halo)
+          </button>
+        </nav>
+
+        <!-- Panel 1: COD4 -->
+        <div class="lan-tab-panel active" id="tab-cod4">
+          <div class="lan-grid-detail">
+            <div class="lan-info">
+              <div class="lan-info-header">
+                <span class="badge badge-emerald">CALL OF DUTY 4</span>
+                <span class="badge badge-amber">BATCHFILE / WIN</span>
+              </div>
+              <h3 class="lan-repo-title">lanscript-cod4</h3>
+              <p class="lan-desc">
+                Automated LAN party deployment toolkit for Call of Duty 4: Modern Warfare. Seamlessly provisions dedicated server configurations, handles broadcast IP discovery, patches client profile issues, and brings machines straight into the lobby with zero manual network hassle.
+              </p>
+              
+              <div class="lan-specs-table">
+                <div class="spec-entry">
+                  <span class="spec-name">Primary Language</span>
+                  <span class="spec-val">Batchfile &bull; Shell</span>
+                </div>
+                <div class="spec-entry">
+                  <span class="spec-name">Target Game</span>
+                  <span class="spec-val">COD4 Modern Warfare (v1.7)</span>
+                </div>
+                <div class="spec-entry">
+                  <span class="spec-name">Mode Support</span>
+                  <span class="spec-val">Dedicated Server + Client Quickjoin</span>
+                </div>
+                <div class="spec-entry">
+                  <span class="spec-name">Zero-Config Net</span>
+                  <span class="spec-val">Automatic Subnet Broadcast</span>
+                </div>
+              </div>
+
+              <a href="https://github.com/cgarst/lanscript-cod4" target="_blank" rel="noopener noreferrer" class="btn-primary" style="padding: 0.65rem 1.25rem; font-size: 0.85rem;">
+                <i class="fa-brands fa-github"></i>
+                <span>Open lanscript-cod4 on GitHub</span>
+              </a>
+            </div>
+
+            <!-- Quick Clone Code Window -->
+            <div class="lan-code-window">
+              <div class="code-window-top">
+                <div class="code-dots">
+                  <span class="code-dot"></span>
+                  <span class="code-dot"></span>
+                  <span class="code-dot"></span>
+                </div>
+                <span>cod4-lan-deploy.cmd</span>
+                <button class="btn-copy-code" data-copy="git clone https://github.com/cgarst/lanscript-cod4.git">
+                  <i class="fa-regular fa-copy"></i> COPY CLONE
+                </button>
+              </div>
+              <div class="code-content-box">
+<span class="term-muted"># Clone COD4 LAN toolkit to local machine:</span>
+<span class="term-cyan">git clone https://github.com/cgarst/lanscript-cod4.git</span>
+<span class="term-muted">cd lanscript-cod4</span>
+
+<span class="term-muted"># Launch dedicated LAN server with broadcast:</span>
+<span class="term-green">call start_dedicated_server.bat</span>
+<span class="term-muted">[*] Discovering local IP subnet...</span>
+<span class="term-muted">[*] Initializing map rotation: Crash, Crossfire, Strike...</span>
+<span class="term-amber">[OK] COD4 dedicated server listening on 0.0.0.0:28960</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: COD5 -->
+        <div class="lan-tab-panel" id="tab-cod5">
+          <div class="lan-grid-detail">
+            <div class="lan-info">
+              <div class="lan-info-header">
+                <span class="badge badge-amber">CALL OF DUTY: WAW</span>
+                <span class="badge badge-cyan">BATCHFILE / COOP</span>
+              </div>
+              <h3 class="lan-repo-title">lanscript-cod5</h3>
+              <p class="lan-desc">
+                Call of Duty 5: World at War LAN orchestration suite. Powers instant 4-player Nazi Zombies coop sessions and multiplayer matches across airgapped or offline local area networks without relying on defunct authentication servers.
+              </p>
+              
+              <div class="lan-specs-table">
+                <div class="spec-entry">
+                  <span class="spec-name">Game Version</span>
+                  <span class="spec-val">CoD: World at War (Coop & MP)</span>
+                </div>
+                <div class="spec-entry">
+                  <span class="spec-name">Special Features</span>
+                  <span class="spec-val">Zombie Map Fastload + Offline Auth</span>
+                </div>
+                <div class="spec-entry">
+                  <span class="spec-name">Network Stack</span>
+                  <span class="spec-val">Local UDP 28960</span>
+                </div>
+                <div class="spec-entry">
+                  <span class="spec-name">License</span>
+                  <span class="spec-val">Open Source Utility</span>
+                </div>
+              </div>
+
+              <a href="https://github.com/cgarst/lanscript-cod5" target="_blank" rel="noopener noreferrer" class="btn-primary" style="padding: 0.65rem 1.25rem; font-size: 0.85rem;">
+                <i class="fa-brands fa-github"></i>
+                <span>Open lanscript-cod5 on GitHub</span>
+              </a>
+            </div>
+
+            <div class="lan-code-window">
+              <div class="code-window-top">
+                <div class="code-dots">
+                  <span class="code-dot"></span>
+                  <span class="code-dot"></span>
+                  <span class="code-dot"></span>
+                </div>
+                <span>cod5-lan-deploy.cmd</span>
+                <button class="btn-copy-code" data-copy="git clone https://github.com/cgarst/lanscript-cod5.git">
+                  <i class="fa-regular fa-copy"></i> COPY CLONE
+                </button>
+              </div>
+              <div class="code-content-box">
+<span class="term-muted"># Clone COD5: WaW LAN toolkit:</span>
+<span class="term-cyan">git clone https://github.com/cgarst/lanscript-cod5.git</span>
+<span class="term-muted">cd lanscript-cod5</span>
+
+<span class="term-muted"># Launch offline coop / zombie session:</span>
+<span class="term-green">call start_lan_coop.bat</span>
+<span class="term-muted">[*] Bypassing online profile check...</span>
+<span class="term-amber">[OK] Ready for Nacht der Untoten & Der Riese LAN</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 3: Quake 3 -->
+        <div class="lan-tab-panel" id="tab-q3">
+          <div class="lan-grid-detail">
+            <div class="lan-info">
+              <div class="lan-info-header">
+                <span class="badge badge-magenta">QUAKE III ARENA</span>
+                <span class="badge badge-emerald">PYTHON SCRIPT</span>
+              </div>
+              <h3 class="lan-repo-title">lanscript-quake3</h3>
+              <p class="lan-desc">
+                Python-driven LAN party server controller for the undisputed king of arena FPS. Instantly spins up dedicated Quake III instances with configurable tick rates, customized map cycles (q3dm6, q3dm17), weapon respawn timers, and client broadcast beacons.
+              </p>
+              
+              <div class="lan-specs-table">
+                <div class="spec-entry">
+                  <span class="spec-name">Primary Language</span>
+                  <span class="spec-val">Python 3</span>
+                </div>
+                <div class="spec-entry">
+                  <span class="spec-name">Engine Support</span>
+                  <span class="spec-val">id Tech 3 / ioquake3</span>
+                </div>
+                <div class="spec-entry">
+                  <span class="spec-name">Tick Rate Tuning</span>
+                  <span class="spec-val">125 FPS / 125 Snaprate</span>
+                </div>
+                <div class="spec-entry">
+                  <span class="spec-name">Cross-Platform</span>
+                  <span class="spec-val">Linux, macOS, Windows</span>
+                </div>
+              </div>
+
+              <a href="https://github.com/cgarst/lanscript-quake3" target="_blank" rel="noopener noreferrer" class="btn-primary" style="padding: 0.65rem 1.25rem; font-size: 0.85rem;">
+                <i class="fa-brands fa-github"></i>
+                <span>Open lanscript-quake3 on GitHub</span>
+              </a>
+            </div>
+
+            <div class="lan-code-window">
+              <div class="code-window-top">
+                <div class="code-dots">
+                  <span class="code-dot"></span>
+                  <span class="code-dot"></span>
+                  <span class="code-dot"></span>
+                </div>
+                <span>q3_launcher.py</span>
+                <button class="btn-copy-code" data-copy="git clone https://github.com/cgarst/lanscript-quake3.git">
+                  <i class="fa-regular fa-copy"></i> COPY CLONE
+                </button>
+              </div>
+              <div class="code-content-box">
+<span class="term-muted"># Clone Quake III LAN orchestrator:</span>
+<span class="term-cyan">git clone https://github.com/cgarst/lanscript-quake3.git</span>
+<span class="term-muted">cd lanscript-quake3</span>
+
+<span class="term-muted"># Launch zero-configuration dedicated arena:</span>
+<span class="term-green">python3 q3_launcher.py --map q3dm17 --gametype ffa</span>
+<span class="term-muted">[*] Initializing Arena Gatekeeper...</span>
+<span class="term-amber">[OK] Server listening on UDP 27960 (The Longest Yard)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 4: Reclaimer LAN -->
+        <div class="lan-tab-panel" id="tab-reclaimer">
+          <div class="lan-grid-detail">
+            <div class="lan-info">
+              <div class="lan-info-header">
+                <span class="badge badge-cyan">HALO / RECLAIMER</span>
+                <span class="badge badge-purple">POWERSHELL</span>
+              </div>
+              <h3 class="lan-repo-title">reclaimer-lan</h3>
+              <p class="lan-desc">
+                Project Reclaimer LAN Scripts engineered to bootstrap local multiplayer sessions for classic Halo PC environments. Handles network bridge adapter detection, firewall rule overrides, and custom gametype distribution across LAN nodes.
+              </p>
+              
+              <div class="lan-specs-table">
+                <div class="spec-entry">
+                  <span class="spec-name">Primary Language</span>
+                  <span class="spec-val">PowerShell</span>
+                </div>
+                <div class="spec-entry">
+                  <span class="spec-name">Protocol</span>
+                  <span class="spec-val">Direct IP & Subnet Broadcast</span>
+                </div>
+                <div class="spec-entry">
+                  <span class="spec-name">Firewall Helper</span>
+                  <span class="spec-val">Automated Port Exception Rules</span>
+                </div>
+                <div class="spec-entry">
+                  <span class="spec-name">Platform</span>
+                  <span class="spec-val">Windows 10 / 11 / Server</span>
+                </div>
+              </div>
+
+              <a href="https://github.com/cgarst/reclaimer-lan" target="_blank" rel="noopener noreferrer" class="btn-primary" style="padding: 0.65rem 1.25rem; font-size: 0.85rem;">
+                <i class="fa-brands fa-github"></i>
+                <span>Open reclaimer-lan on GitHub</span>
+              </a>
+            </div>
+
+            <div class="lan-code-window">
+              <div class="code-window-top">
+                <div class="code-dots">
+                  <span class="code-dot"></span>
+                  <span class="code-dot"></span>
+                  <span class="code-dot"></span>
+                </div>
+                <span>reclaimer-lan.ps1</span>
+                <button class="btn-copy-code" data-copy="git clone https://github.com/cgarst/reclaimer-lan.git">
+                  <i class="fa-regular fa-copy"></i> COPY CLONE
+                </button>
+              </div>
+              <div class="code-content-box">
+<span class="term-muted"># Clone Project Reclaimer LAN suite:</span>
+<span class="term-cyan">git clone https://github.com/cgarst/reclaimer-lan.git</span>
+<span class="term-muted">cd reclaimer-lan</span>
+
+<span class="term-muted"># Execute automated network provisioner:</span>
+<span class="term-green">.\reclaimer-setup.ps1 -Dedicated -Map "BloodGulch"</span>
+<span class="term-muted">[*] Configuring local adapter firewall ports...</span>
+<span class="term-amber">[OK] Slayer / CTF LAN session active</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Secondary Homelab / Gaming Repositories -->
+      <div class="subrepos-header" id="other-tools">
+        <div>
+          <h3 style="font-size: 1.5rem; font-weight: 700;">More Gaming & Streaming Hardware Rigs</h3>
+          <p style="color: var(--text-dim); font-size: 0.9rem;">High-performance streaming bridges, handheld ports, and homelab tools.</p>
+        </div>
+        <a href="https://github.com/cgarst?tab=repositories" target="_blank" rel="noopener noreferrer" style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--neon-cyan); font-weight: 600;">
+          All Repositories (GitHub) <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="subrepos-grid">
+        
+        <!-- gamestream_launchpad -->
+        <div class="subrepo-card">
+          <div>
+            <div class="subrepo-title">
+              <i class="fa-solid fa-gamepad" style="color: var(--neon-amber);"></i>
+              <a href="https://github.com/cgarst/gamestream_launchpad" target="_blank" rel="noopener noreferrer">gamestream_launchpad</a>
+            </div>
+            <p class="subrepo-desc">
+              Optimized GameStream & Moonlight environment designed for seamless low-latency launching of all PC games to TV and handheld consoles.
+            </p>
+          </div>
+          <div class="subrepo-footer">
+            <span><i class="fa-brands fa-python" style="color: #38bdf8;"></i> Python</span>
+            <span style="color: var(--neon-amber); font-weight: 700;"><i class="fa-solid fa-star"></i> 390+ Stars</span>
+          </div>
+        </div>
+
+        <!-- chiaki-steamdeck -->
+        <div class="subrepo-card">
+          <div>
+            <div class="subrepo-title">
+              <i class="fa-brands fa-playstation" style="color: #38bdf8;"></i>
+              <a href="https://github.com/cgarst/chiaki-steamdeck" target="_blank" rel="noopener noreferrer">chiaki-steamdeck</a>
+            </div>
+            <p class="subrepo-desc">
+              PlayStation Remote Play automation and integration tailored specifically for the Valve Steam Deck handheld gaming environment.
+            </p>
+          </div>
+          <div class="subrepo-footer">
+            <span><i class="fa-solid fa-microchip"></i> Handheld Tuning</span>
+            <a href="https://github.com/cgarst/chiaki-steamdeck" target="_blank" rel="noopener noreferrer" style="color: var(--neon-cyan);">Repo ↗</a>
+          </div>
+        </div>
+
+        <!-- syncribullet -->
+        <div class="subrepo-card">
+          <div>
+            <div class="subrepo-title">
+              <i class="fa-solid fa-arrows-rotate" style="color: var(--neon-emerald);"></i>
+              <a href="https://github.com/cgarst/syncribullet" target="_blank" rel="noopener noreferrer">syncribullet</a>
+            </div>
+            <p class="subrepo-desc">
+              Real-time media sync utility allowing seamless tracking of currently watched media streams and synchronization across devices.
+            </p>
+          </div>
+          <div class="subrepo-footer">
+            <span><i class="fa-brands fa-js" style="color: #f7df1e;"></i> TypeScript</span>
+            <a href="https://github.com/cgarst/syncribullet" target="_blank" rel="noopener noreferrer" style="color: var(--neon-cyan);">Repo ↗</a>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Interactive Hacker Terminal (zathu-sh) -->
+  <section class="terminal-section" id="terminal-sh">
+    <div class="container">
+      
+      <div class="section-header">
+        <div class="section-label">
+          <i class="fa-solid fa-code"></i>
+          <span>LIVE SHELL PROMPT</span>
+        </div>
+        <h2 class="section-title">Interactive Terminal Console</h2>
+        <p class="section-desc">
+          Test drive Zathu Software directly in your browser. Type commands below or click the quick pills to query repositories, trigger audio synthesis, or examine system lore.
+        </p>
+      </div>
+
+      <div class="terminal-window">
+        <div class="terminal-titlebar">
+          <div class="terminal-titlebar-left">
+            <div class="code-dots">
+              <span class="code-dot"></span>
+              <span class="code-dot"></span>
+              <span class="code-dot"></span>
+            </div>
+            <span>zathu-sh v2.4 (x86_64-apple-darwin) -- zsh</span>
+          </div>
+          <div>
+            <span>SUGGESTED: </span>
+            <button class="term-cmd-pill" data-cmd="projects">projects</button>
+            <button class="term-cmd-pill" data-cmd="lan">lan</button>
+            <button class="term-cmd-pill" data-cmd="music">music</button>
+            <button class="term-cmd-pill" data-cmd="synth">synth</button>
+            <button class="term-cmd-pill" data-cmd="theme">theme</button>
+            <button class="term-cmd-pill" data-cmd="help">help</button>
+          </div>
+        </div>
+
+        <div class="terminal-body" id="term-body">
+          <div id="term-output" class="terminal-output">
+            <div class="terminal-line"><span class="term-cyan">ZATHU SYSTEM KERNEL V2.4-RELEASE [INITIALIZED]</span></div>
+            <div class="terminal-line"><span class="term-muted">Type '<span class="term-green">help</span>' for available commands, or click any suggested pill above.</span></div>
+            <div class="terminal-line"><span class="term-muted">Tip: Type '<span class="term-green">projects</span>' to list live web apps, or '<span class="term-green">synth</span>' for audio.</span></div>
+          </div>
+          
+          <div class="terminal-prompt-row">
+            <span class="terminal-prompt-symbol">guest@zathu-box:~$</span>
+            <input type="text" id="term-input" class="terminal-input" autocomplete="off" spellcheck="false" autofocus placeholder="type a command...">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Dev Philosophy / Indie Manifest -->
+  <section class="section" id="philosophy" style="border-top: 1px solid var(--border-dim);">
+    <div class="container">
+      
+      <div class="section-header">
+        <div class="section-label">
+          <i class="fa-solid fa-compass"></i>
+          <span>CORE CODE</span>
+        </div>
+        <h2 class="section-title">The Indie Dev Philosophy</h2>
+        <p class="section-desc">
+          Software was once personal, tangible, and fun. Zathu Software exists to keep that spirit alive through open-source craftsmanship.
+        </p>
+      </div>
+
+      <div class="philosophy-grid">
+        
+        <div class="philosophy-card">
+          <div class="philosophy-icon-wrap p-icon-music">
+            <i class="fa-solid fa-guitar"></i>
+          </div>
+          <h3 class="philosophy-title">The Musician's Bench</h3>
+          <p class="philosophy-desc">
+            We reject the idea that every piece of music software requires a $20/month subscription or cloud lock-in. Tools like MajesticTab and Setlore are built by guitarists and gig-goers to serve musicians first — offline, responsive, and distraction-free.
+          </p>
+        </div>
+
+        <div class="philosophy-card">
+          <div class="philosophy-icon-wrap p-icon-hacker">
+            <i class="fa-solid fa-terminal"></i>
+          </div>
+          <h3 class="philosophy-title">The Hacker Craft</h3>
+          <p class="philosophy-desc">
+            No bloated JavaScript frameworks when vanilla code does the job with zero overhead. No advertising beacons, invasive fingerprinting, or dark patterns. Everything is licensed under open, copyleft-friendly terms on GitHub.
+          </p>
+        </div>
+
+        <div class="philosophy-card">
+          <div class="philosophy-icon-wrap p-icon-gamer">
+            <i class="fa-solid fa-gamepad"></i>
+          </div>
+          <h3 class="philosophy-title">The LAN & Gamer Spirit</h3>
+          <p class="philosophy-desc">
+            Games are best enjoyed together on low-latency local networks. Our LAN party scripts and game launch pads preserve classic multiplayer experiences (CoD4, WaW, Quake III) so LAN parties remain effortless 20 years into the future.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      
+      <div class="footer-top">
+        <div>
+          <img src="assets/zathu-logo.svg" alt="Zathu Software Logo" style="height: 38px; width: auto;">
+          <p class="footer-brand-desc">
+            Independent open-source lab for musicians, hackers, and gamers. Built for local networks, stage amps, and midnight terminal sessions.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Flagship Applications</h4>
+          <ul class="footer-links-list">
+            <li class="footer-link-item">
+              <a href="https://majestictab.zathu.net/" target="_blank" rel="noopener noreferrer">
+                <i class="fa-solid fa-guitar" style="color: var(--neon-cyan); font-size: 0.8rem;"></i>
+                MajesticTab (Guitar Studio) ↗
+              </a>
+            </li>
+            <li class="footer-link-item">
+              <a href="https://setlore.zathu.net/" target="_blank" rel="noopener noreferrer">
+                <i class="fa-solid fa-chart-line" style="color: var(--neon-purple); font-size: 0.8rem;"></i>
+                Setlore (Concert Analytics) ↗
+              </a>
+            </li>
+            <li class="footer-link-item">
+              <a href="https://github.com/cgarst/random-album-for-youtube-music" target="_blank" rel="noopener noreferrer">
+                <i class="fa-solid fa-compact-disc" style="color: var(--neon-magenta); font-size: 0.8rem;"></i>
+                Random Album for YT Music ↗
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Repositories & LAN</h4>
+          <ul class="footer-links-list">
+            <li class="footer-link-item">
+              <a href="https://github.com/cgarst/lanscript-cod4" target="_blank" rel="noopener noreferrer">
+                <i class="fa-solid fa-code" style="color: var(--neon-emerald); font-size: 0.8rem;"></i>
+                lanscript-cod4 ↗
+              </a>
+            </li>
+            <li class="footer-link-item">
+              <a href="https://github.com/cgarst/lanscript-quake3" target="_blank" rel="noopener noreferrer">
+                <i class="fa-solid fa-code" style="color: var(--neon-emerald); font-size: 0.8rem;"></i>
+                lanscript-quake3 ↗
+              </a>
+            </li>
+            <li class="footer-link-item">
+              <a href="https://github.com/cgarst?tab=repositories" target="_blank" rel="noopener noreferrer">
+                <i class="fa-solid fa-cubes" style="color: var(--neon-amber); font-size: 0.8rem;"></i>
+                All Repositories List ↗
+              </a>
+            </li>
+            <li class="footer-link-item">
+              <a href="https://github.com/cgarst/" target="_blank" rel="noopener noreferrer">
+                <i class="fa-brands fa-github" style="color: var(--text-main); font-size: 0.8rem;"></i>
+                GitHub Profile (@cgarst) ↗
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom-bar">
+        <div>
+          &copy; 2026 Zathu Software &bull; Released under Copyleft & Open Source Licenses.
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+          <span>HOSTED ON GITHUB PAGES</span>
+          <a href="#hero" style="color: var(--neon-cyan);"><i class="fa-solid fa-arrow-up"></i> TOP</a>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- App Script -->
+  <script src="js/app.js"></script>
+</body>
+</html>
