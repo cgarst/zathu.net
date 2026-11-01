@@ -26,9 +26,8 @@
   <circle cx="33" cy="32" r="1.8" fill="#ec4899" />
 
   <!-- Typography -->
-  <text x="74" y="36" font-family="'Space Grotesk', system-ui, -apple-system, sans-serif" font-size="21" font-weight="800" letter-spacing="1.2">
+  <text x="74" y="39" font-family="'Space Grotesk', system-ui, -apple-system, sans-serif" font-size="21" font-weight="800" letter-spacing="1.2">
     <tspan fill="#f8fafc">ZATHU </tspan>
     <tspan fill="url(#logoGrad)">SOFTWARE</tspan>
   </text>
-  <text x="75" y="52" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" letter-spacing="3">INDIE DEV &bull; OPEN SOURCE</text>
 </svg>
