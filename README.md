@@ -1,6 +1,6 @@
 # Zathu Software ⚡
 
-Official website and software hub for **Zathu Software** (`cgarst`) — an independent open-source lab crafting software for musicians, hackers, and gamers.
+Official website and software hub for **Zathu Software** (`cgarst`) — an independent open-source lab building open tools with the features we couldn't find anywhere else.
 
 Deployed seamlessly under **GitHub Pages**.
 

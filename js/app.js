@@ -1,6 +1,6 @@
 /**
  * ZATHU SOFTWARE - INTERACTIVE CYBER-AUDIO ENGINE & TERMINAL
- * Handcrafted for musicians, hackers, and gamers.
+ * Open tools with the features we couldn't find anywhere else.
  */
 
 (function () {
