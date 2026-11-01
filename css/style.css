@@ -1713,6 +1713,12 @@ body.scope-max-open .hero-section .container {
   z-index: 10001;
 }
 
+/* iOS Safari clips a fixed child to an overflow:hidden ancestor, cutting the maximized rack
+   off at the hero's bottom edge so the next section shows through; lift the clip. */
+body.scope-max-open .hero-section {
+  overflow: visible;
+}
+
 /* Mobile browsers can still paint later sections over a fixed element, so hide the rest
    of the page while maximized (visibility keeps layout, so scroll position is unchanged). */
 body.scope-max-open .site-header,
