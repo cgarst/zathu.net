@@ -13,6 +13,7 @@
     rootNote: 'E',
     rootMidi: 52, // E3 (164.81 Hz)
     currentMode: 'minor',
+    arpMode: false,
     commandHistory: [],
     historyIndex: -1,
   };
@@ -249,9 +250,82 @@
     }
   }
 
+  // Arpeggiator: the pressed key picks the starting scale degree; a 6-note pattern
+  // (degrees +0, +2, +4, octave, +4, +2) climbs and falls through the selected scale while held.
+  const ARP_STEP_SECONDS = 0.13;
+
+  function getArpFrequencies(startIndex) {
+    const modeKey = state.currentMode || 'minor';
+    const mode = MODES[modeKey] || MODES['minor'];
+    const n = mode.intervals.length;
+    const baseMidi = state.rootMidi || 52;
+    const midiAt = (i) => baseMidi + mode.intervals[i % n] + 12 * Math.floor(i / n);
+    return [0, 2, 4, n, 4, 2].map((step) => {
+      const midi = midiAt(startIndex + step);
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    });
+  }
+
+  function startArpVoice(keyId, startIndex, el = null) {
+    enableSound();
+    if (!audioCtx || !masterGain) return;
+    if (activeKeyVoices[keyId]) return;
+
+    try {
+      const freqs = getArpFrequencies(startIndex);
+      const type = state.currentWaveform || 'sine';
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+
+      osc.type = type;
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(freqs[0] * 6, now);
+      gain.gain.setValueAtTime(0.0001, now);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now);
+
+      let step = 0;
+      const playStep = () => {
+        const t = audioCtx.currentTime;
+        const f = freqs[step % freqs.length];
+        osc.frequency.setValueAtTime(f, t);
+        filter.frequency.setValueAtTime(f * 6, t);
+        gain.gain.cancelScheduledValues(t);
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.linearRampToValueAtTime(0.32, t + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.14, t + ARP_STEP_SECONDS * 0.9);
+        step++;
+      };
+      playStep();
+      const timer = setInterval(playStep, ARP_STEP_SECONDS * 1000);
+
+      if (el) el.classList.add('key-pressed');
+      activeKeyVoices[keyId] = { osc, gain, filter, el, timer };
+    } catch (e) {
+      console.warn('Start arp voice error:', e);
+    }
+  }
+
+  // Start a held key in the current mode (plain note or arpeggio)
+  function triggerKey(keyId, el) {
+    if (!el) return;
+    if (state.arpMode) {
+      startArpVoice(keyId, parseInt(el.getAttribute('data-index'), 10) || 0, el);
+    } else {
+      startNoteVoice(keyId, parseFloat(el.getAttribute('data-freq')), el);
+    }
+  }
+
   function stopNoteVoice(keyId) {
     const voice = activeKeyVoices[keyId];
     if (!voice || !audioCtx) return;
+
+    if (voice.timer) clearInterval(voice.timer);
 
     try {
       const now = audioCtx.currentTime;
@@ -463,31 +537,22 @@
     if (!statusEl) return;
 
     if (noteName) {
-      const roundedCents = Math.round(cents);
       const roundedTarget = Math.round(targetCents);
-      let vibText = '0¢';
-      let vibColor = 'var(--neon-emerald)';
-
-      if (Math.abs(roundedTarget) > 2) {
-        const currentStr = roundedCents >= 0 ? `+${roundedCents}¢` : `${roundedCents}¢`;
-        const targetStr = roundedTarget >= 0 ? `+${roundedTarget}¢` : `${roundedTarget}¢`;
-        vibText = `${currentStr} <span style="opacity: 0.7; font-size: 0.9em;">[0 &harr; ${targetStr}]</span>`;
-        vibColor = 'var(--neon-amber)';
-      }
-
-      // Calculate instantaneous frequency with detune cents
+      const vibActive = Math.abs(roundedTarget) > 2;
+      const vibText = vibActive ? `VIB ${roundedTarget > 0 ? '+' : ''}${roundedTarget}¢` : 'VIB 0';
+      const vibColor = vibActive ? 'var(--neon-amber)' : 'var(--text-dim)';
       const instantFreq = freq * Math.pow(2, cents / 1200);
 
-      statusEl.innerHTML = `NOTE: <span style="color: var(--neon-cyan); font-weight: 700;">${noteName}</span> <span style="color: var(--text-dim);">(${degree})</span> &bull; <span style="color: ${vibColor}; font-weight: 700;">AUTO-VIBRATO: ${vibText}</span> &bull; <span style="color: var(--neon-amber);">${instantFreq.toFixed(1)} Hz</span> &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
+      statusEl.innerHTML = `<span style="color: var(--neon-cyan); font-weight: 700;">${noteName}</span> <span style="color: var(--text-dim);">${degree}</span> &bull; ${instantFreq.toFixed(0)} Hz<br><span style="color: ${vibColor};">${vibText}</span>`;
     } else {
-      statusEl.innerHTML = `<span style="color: var(--neon-cyan); font-weight: 700;">FREQ: ${Math.round(freq)} Hz</span> &bull; <span style="color: var(--neon-amber);">CUTOFF: ${Math.round(cutoff)} Hz</span> &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
+      statusEl.innerHTML = `<span style="color: var(--neon-cyan); font-weight: 700;">FREQ: ${Math.round(freq)} Hz</span><br><span style="color: var(--neon-amber);">CUTOFF: ${Math.round(cutoff)} Hz</span>`;
     }
   }
 
   function resetScopeStatus() {
     const statusEl = document.getElementById('scope-status-text');
     if (statusEl) {
-      statusEl.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> CLICK & DRAG WAVE FOR SCALE NOTES & AUTO-VIBRATO &bull; WAVE: ${state.currentWaveform.toUpperCase()}`;
+      statusEl.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> DRAG WAVE TO PLAY`;
     }
   }
 
@@ -499,13 +564,43 @@
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    let width = (canvas.width = canvas.parentElement.clientWidth);
-    let height = (canvas.height = 180);
+    const scopeFrame = canvas.parentElement;
+    let width = (canvas.width = scopeFrame.clientWidth);
+    let height = (canvas.height = scopeFrame.clientHeight || 180);
 
-    window.addEventListener('resize', () => {
-      if (canvas.parentElement) {
-        width = canvas.width = canvas.parentElement.clientWidth;
-        height = canvas.height = 180;
+    function resizeScopeCanvas() {
+      if (!scopeFrame) return;
+      width = canvas.width = scopeFrame.clientWidth;
+      height = canvas.height = scopeFrame.clientHeight || 180;
+    }
+
+    window.addEventListener('resize', resizeScopeCanvas);
+    if (window.ResizeObserver) new ResizeObserver(resizeScopeCanvas).observe(scopeFrame);
+
+    // Maximize button: the whole rack fills the viewport (Esc or the button restores it)
+    const rackCard = document.querySelector('.hardware-chassis-card');
+    const maxBtn = document.getElementById('scope-maximize-btn');
+    function setScopeMaximized(on) {
+      if (!rackCard) return;
+      rackCard.classList.toggle('scope-maximized', on);
+      document.body.classList.toggle('scope-max-open', on);
+      if (maxBtn) {
+        maxBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        maxBtn.setAttribute('aria-label', on ? 'Restore synth rack size' : 'Maximize synth rack to full viewport');
+        maxBtn.setAttribute('title', on ? 'Restore (Esc)' : 'Maximize to full viewport');
+        maxBtn.textContent = on ? '✕' : '⛶';
+      }
+      resizeScopeCanvas();
+    }
+    if (maxBtn) {
+      maxBtn.addEventListener('click', () => {
+        playClickBlip('high');
+        setScopeMaximized(!rackCard.classList.contains('scope-maximized'));
+      });
+    }
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && rackCard && rackCard.classList.contains('scope-maximized')) {
+        setScopeMaximized(false);
       }
     });
 
@@ -796,6 +891,7 @@
         btn.className = 'synth-key' + (index === 0 ? ' is-root' : '');
         btn.setAttribute('data-freq', freq.toFixed(2));
         btn.setAttribute('data-key', shortcut);
+        btn.setAttribute('data-index', index);
         btn.setAttribute('title', `${noteName} (${freq.toFixed(1)} Hz) - ${degree}`);
 
         btn.innerHTML = `
@@ -807,7 +903,7 @@
         // Mouse click & hold: sustains note while held, fades out on release
         btn.addEventListener('mousedown', (e) => {
           if (e.button !== 0) return;
-          startNoteVoice(shortcut, freq, btn);
+          triggerKey(shortcut, btn);
         });
 
         btn.addEventListener('mouseup', () => {
@@ -821,7 +917,7 @@
         // Touch for mobile / tablet
         btn.addEventListener('touchstart', (e) => {
           e.preventDefault();
-          startNoteVoice(shortcut, freq, btn);
+          triggerKey(shortcut, btn);
         }, { passive: false });
 
         btn.addEventListener('touchend', (e) => {
@@ -834,6 +930,25 @@
         });
 
         container.appendChild(btn);
+      });
+    }
+
+    // Notes / Arpeggiator slider
+    const arpToggle = document.getElementById('arp-toggle');
+    const arpLabelNotes = document.getElementById('arp-label-notes');
+    const arpLabelArp = document.getElementById('arp-label-arp');
+    if (arpToggle) {
+      const syncArpUi = () => {
+        if (arpLabelNotes) arpLabelNotes.classList.toggle('active', !state.arpMode);
+        if (arpLabelArp) arpLabelArp.classList.toggle('active', state.arpMode);
+      };
+      arpToggle.checked = state.arpMode;
+      syncArpUi();
+      arpToggle.addEventListener('change', () => {
+        playClickBlip('high');
+        stopAllNoteVoices();
+        state.arpMode = arpToggle.checked;
+        syncArpUi();
       });
     }
 
@@ -873,10 +988,7 @@
       const num = e.key;
       if (num >= '1' && num <= '8') {
         const keyEl = container.querySelector(`.synth-key[data-key="${num}"]`);
-        if (keyEl) {
-          const freq = parseFloat(keyEl.getAttribute('data-freq'));
-          startNoteVoice(num, freq, keyEl);
-        }
+        if (keyEl) triggerKey(num, keyEl);
       }
     });
 

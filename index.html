@@ -160,11 +160,7 @@
                 <span class="rack-title">OSCILLOSCOPE & SYNTH RACK</span>
               </div>
               <div class="rack-header-right">
-                <div class="led-cluster">
-                  <span class="led led-cyan" title="Audio In"></span>
-                  <span class="led led-magenta" title="Carrier Sync"></span>
-                  <span class="led led-green" title="Output Ready"></span>
-                </div>
+                <button type="button" class="rack-max-btn" id="scope-maximize-btn" aria-pressed="false" aria-label="Maximize synth rack to full viewport" title="Maximize to full viewport">⛶</button>
               </div>
             </div>
 
@@ -176,7 +172,7 @@
               </div>
               
               <div class="oscilloscope-meta">
-                <span id="scope-status-text"><i class="fa-solid fa-hand-pointer"></i> CLICK & DRAG WAVE FOR SCALE NOTES & AUTO-VIBRATO</span>
+                <span id="scope-status-text"><i class="fa-solid fa-hand-pointer"></i> DRAG WAVE TO PLAY</span>
                 <div class="scope-wave-selector">
                   <button class="scope-btn active" data-wave="sine" title="Pure smooth sine wave">SINE</button>
                   <button class="scope-btn" data-wave="sawtooth" title="Bright rich sawtooth wave">SAW</button>
@@ -221,6 +217,16 @@
                 </div>
               </div>
 
+              <!-- Keys behavior slider: single notes vs. 6-note arpeggio -->
+              <div class="arp-switcher" role="group" aria-label="Key behavior">
+                <span id="arp-label-notes" class="arp-label active">NOTES</span>
+                <label class="arp-switch" title="Slide to switch keys between single notes and a 6-note arpeggio">
+                  <input type="checkbox" id="arp-toggle" aria-label="Arpeggiator mode">
+                  <span class="arp-slider"></span>
+                </label>
+                <span id="arp-label-arp" class="arp-label">ARPEGGIATOR</span>
+              </div>
+
               <!-- Interactive Number Buttons [1] through [8] (Click or Keys 1-8) -->
               <div class="synth-keys-grid" id="synth-keys-container"></div>
             </div>
@@ -253,11 +259,6 @@
         <article class="project-card project-card-majestictab">
           <div class="project-info">
             <div>
-              <div class="project-badge-row">
-                <span class="badge badge-cyan">LIVE WEB APP</span>
-                <span class="badge badge-emerald">STEAM DECK READY</span>
-                <span class="badge badge-amber">LOCAL JAM MODE</span>
-              </div>
               <h3 class="project-title">MajesticTab</h3>
               <p class="project-tagline">Focused Guitar Tab Reader & Practice Studio</p>
               <p class="project-description">
@@ -285,8 +286,8 @@
 
             <div class="project-card-actions">
               <a href="https://majestictab.zathu.net/" target="_blank" rel="noopener noreferrer" class="btn-card-launch">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                <span>Launch MajesticTab</span>
+                <i class="fa-solid fa-circle-info"></i>
+                <span>About MajesticTab</span>
               </a>
               <a href="https://github.com/cgarst/MajesticTab" target="_blank" rel="noopener noreferrer" class="btn-card-code">
                 <i class="fa-brands fa-github"></i>
@@ -295,48 +296,8 @@
             </div>
           </div>
 
-          <!-- Interactive Fretboard Visualizer Panel -->
-          <div class="project-visual-panel">
-            <div class="fretboard-mockup">
-              <div class="mockup-fretboard-header">
-                <span><i class="fa-solid fa-sliders"></i> TRACK 01: LEAD GUITAR</span>
-                <span>TUNING: E STANDARD</span>
-              </div>
-
-              <!-- Animated Fretboard Lines -->
-              <div class="guitar-fretboard-wire">
-                <div class="fret-vertical-bars">
-                  <div class="fret-bar"></div>
-                  <div class="fret-bar"></div>
-                  <div class="fret-bar"></div>
-                  <div class="fret-bar"></div>
-                  <div class="fret-bar"></div>
-                  <div class="fret-bar"></div>
-                </div>
-                <div class="guitar-string">
-                  <div class="fret-marker" style="left: 68%;"></div>
-                </div>
-                <div class="guitar-string">
-                  <div class="fret-marker" style="left: 42%;"></div>
-                </div>
-                <div class="guitar-string">
-                  <div class="fret-marker" style="left: 85%;"></div>
-                </div>
-                <div class="guitar-string"></div>
-                <div class="guitar-string">
-                  <div class="fret-marker" style="left: 25%;"></div>
-                </div>
-                <div class="guitar-string"></div>
-              </div>
-
-              <!-- Live Tab Snippet -->
-              <div class="tab-snippet">e|---12h15p12-------12--17~---|
-B|-15---------15-13-----------|
-G|----------------------------|
-D|----------------------------|
-A|----------------------------|
-E|----------------------------|</div>
-            </div>
+          <div class="project-visual-panel project-icon-panel">
+            <img class="project-app-icon" src="assets/icons/majestictab.png" alt="MajesticTab icon" width="160" height="160" loading="lazy">
           </div>
         </article>
 
@@ -344,12 +305,6 @@ E|----------------------------|</div>
         <article class="project-card project-card-setlore">
           <div class="project-info">
             <div>
-              <div class="project-badge-row">
-                <span class="badge badge-purple">LIVE PLATFORM</span>
-                <span class="badge badge-cyan">SELF-HOSTABLE</span>
-                <span class="badge badge-emerald">CONCERT ARCHIVE</span>
-                <span class="badge badge-magenta">PWA SUPPORT</span>
-              </div>
               <h3 class="project-title">Setlore</h3>
               <p class="project-tagline">Self-Hosted Live Concert & Setlist Analytics</p>
               <p class="project-description">
@@ -377,39 +332,18 @@ E|----------------------------|</div>
 
             <div class="project-card-actions">
               <a href="https://setlore.zathu.net/" target="_blank" rel="noopener noreferrer" class="btn-card-launch" style="background: var(--neon-purple); color: #fff;">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                <span>Open Setlore</span>
+                <i class="fa-solid fa-circle-info"></i>
+                <span>About Setlore</span>
               </a>
-              <a href="https://github.com/cgarst" target="_blank" rel="noopener noreferrer" class="btn-card-code">
+              <a href="https://github.com/cgarst/setlore" target="_blank" rel="noopener noreferrer" class="btn-card-code">
                 <i class="fa-brands fa-github"></i>
-                <span>Developer Profile</span>
+                <span>View Source</span>
               </a>
             </div>
           </div>
 
-          <!-- Setlore Visual Stage Mockup -->
-          <div class="project-visual-panel">
-            <div class="setlore-mockup">
-              <div class="mockup-fretboard-header" style="color: #c084fc;">
-                <span><i class="fa-solid fa-chart-simple"></i> TOUR FREQUENCY METRICS</span>
-                <span>48 SHOWS ARCHIVED</span>
-              </div>
-
-              <!-- Animated Stage Analytics Bars -->
-              <div class="concert-analytics-bars">
-                <div class="analytics-col" style="height: 45%;" title="Opener track"></div>
-                <div class="analytics-col" style="height: 80%;" title="Core staple"></div>
-                <div class="analytics-col" style="height: 60%;" title="Fan favorite"></div>
-                <div class="analytics-col" style="height: 95%;" title="Encore anthem"></div>
-                <div class="analytics-col" style="height: 35%;" title="Tour debut"></div>
-                <div class="analytics-col" style="height: 70%;" title="Acoustic interlude"></div>
-                <div class="analytics-col" style="height: 90%;" title="Closer"></div>
-              </div>
-
-              <div class="tab-snippet" style="color: #c084fc; border-color: rgba(168, 85, 247, 0.2);">TOUR: NORTH AMERICAN LEG // 2026
-VENUE: THE FILLMORE &bull; CAP: 2,500
-AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
-            </div>
+          <div class="project-visual-panel project-icon-panel">
+            <img class="project-app-icon project-app-icon-round" src="assets/icons/setlore.png" alt="Setlore icon" width="160" height="160" loading="lazy">
           </div>
         </article>
 
@@ -417,12 +351,6 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
         <article class="project-card project-card-ytm">
           <div class="project-info">
             <div>
-              <div class="project-badge-row">
-                <span class="badge badge-magenta">BROWSER EXTENSION</span>
-                <span class="badge badge-amber">USERSCRIPT</span>
-                <span class="badge badge-cyan">GPL-3.0</span>
-                <span class="badge badge-emerald">ALBUM PURIST</span>
-              </div>
               <h3 class="project-title">Random Album for YouTube Music</h3>
               <p class="project-tagline">Rediscover Full-Album Listening</p>
               <p class="project-description">
@@ -449,32 +377,19 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
             </div>
 
             <div class="project-card-actions">
-              <a href="https://github.com/cgarst/random-album-for-youtube-music" target="_blank" rel="noopener noreferrer" class="btn-card-launch" style="background: var(--neon-magenta); color: #fff;">
-                <i class="fa-brands fa-github"></i>
-                <span>Get Extension / Repo</span>
+              <a href="https://github.com/cgarst/random-album-for-youtube-music#readme" target="_blank" rel="noopener noreferrer" class="btn-card-launch" style="background: var(--neon-magenta); color: #fff;">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>About Random Album for YouTube Music</span>
               </a>
-              <a href="https://github.com/cgarst?tab=repositories" target="_blank" rel="noopener noreferrer" class="btn-card-code">
-                <i class="fa-solid fa-cubes"></i>
-                <span>More Audio Utilities</span>
+              <a href="https://github.com/cgarst/random-album-for-youtube-music" target="_blank" rel="noopener noreferrer" class="btn-card-code">
+                <i class="fa-brands fa-github"></i>
+                <span>View Source</span>
               </a>
             </div>
           </div>
 
-          <!-- YTM Visual Vinyl Mockup -->
-          <div class="project-visual-panel">
-            <div class="ytm-mockup">
-              <div class="vinyl-record">
-                <div class="vinyl-center">
-                  <div class="vinyl-hole"></div>
-                </div>
-              </div>
-              <div style="font-family: var(--font-mono); font-size: 0.82rem; color: #f472b6; font-weight: 700;">
-                <i class="fa-solid fa-shuffle"></i> SHUFFLING LIBRARY...
-              </div>
-              <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem;">
-                SELECTING COMPLETE UNCOMPRESSED ALBUM
-              </div>
-            </div>
+          <div class="project-visual-panel project-icon-panel">
+            <img class="project-app-icon" src="assets/icons/random-album-ytm.png" alt="Random Album for YouTube Music icon" width="160" height="160" loading="lazy">
           </div>
         </article>
 
@@ -519,10 +434,6 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
         <div class="lan-tab-panel active" id="tab-cod4">
           <div class="lan-grid-detail">
             <div class="lan-info">
-              <div class="lan-info-header">
-                <span class="badge badge-emerald">CALL OF DUTY 4</span>
-                <span class="badge badge-amber">BATCHFILE / WIN</span>
-              </div>
               <h3 class="lan-repo-title">lanscript-cod4</h3>
               <p class="lan-desc">
                 Automated LAN party deployment toolkit for Call of Duty 4: Modern Warfare. Seamlessly provisions dedicated server configurations, handles broadcast IP discovery, patches client profile issues, and brings machines straight into the lobby with zero manual network hassle.
@@ -566,8 +477,7 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
                   <i class="fa-regular fa-copy"></i> COPY CLONE
                 </button>
               </div>
-              <div class="code-content-box">
-<span class="term-muted"># Clone COD4 LAN toolkit to local machine:</span>
+              <div class="code-content-box"><span class="term-muted"># Clone COD4 LAN toolkit to local machine:</span>
 <span class="term-cyan">git clone https://github.com/cgarst/lanscript-cod4.git</span>
 <span class="term-muted">cd lanscript-cod4</span>
 
@@ -575,8 +485,7 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
 <span class="term-green">call start_dedicated_server.bat</span>
 <span class="term-muted">[*] Discovering local IP subnet...</span>
 <span class="term-muted">[*] Initializing map rotation: Crash, Crossfire, Strike...</span>
-<span class="term-amber">[OK] COD4 dedicated server listening on 0.0.0.0:28960</span>
-              </div>
+<span class="term-amber">[OK] COD4 dedicated server listening on 0.0.0.0:28960</span></div>
             </div>
           </div>
         </div>
@@ -585,10 +494,6 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
         <div class="lan-tab-panel" id="tab-cod5">
           <div class="lan-grid-detail">
             <div class="lan-info">
-              <div class="lan-info-header">
-                <span class="badge badge-amber">CALL OF DUTY: WAW</span>
-                <span class="badge badge-cyan">BATCHFILE / COOP</span>
-              </div>
               <h3 class="lan-repo-title">lanscript-cod5</h3>
               <p class="lan-desc">
                 Call of Duty 5: World at War LAN orchestration suite. Powers instant 4-player Nazi Zombies coop sessions and multiplayer matches across airgapped or offline local area networks without relying on defunct authentication servers.
@@ -631,16 +536,14 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
                   <i class="fa-regular fa-copy"></i> COPY CLONE
                 </button>
               </div>
-              <div class="code-content-box">
-<span class="term-muted"># Clone COD5: WaW LAN toolkit:</span>
+              <div class="code-content-box"><span class="term-muted"># Clone COD5: WaW LAN toolkit:</span>
 <span class="term-cyan">git clone https://github.com/cgarst/lanscript-cod5.git</span>
 <span class="term-muted">cd lanscript-cod5</span>
 
 <span class="term-muted"># Launch offline coop / zombie session:</span>
 <span class="term-green">call start_lan_coop.bat</span>
 <span class="term-muted">[*] Bypassing online profile check...</span>
-<span class="term-amber">[OK] Ready for Nacht der Untoten & Der Riese LAN</span>
-              </div>
+<span class="term-amber">[OK] Ready for Nacht der Untoten & Der Riese LAN</span></div>
             </div>
           </div>
         </div>
@@ -649,10 +552,6 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
         <div class="lan-tab-panel" id="tab-q3">
           <div class="lan-grid-detail">
             <div class="lan-info">
-              <div class="lan-info-header">
-                <span class="badge badge-magenta">QUAKE III ARENA</span>
-                <span class="badge badge-emerald">PYTHON SCRIPT</span>
-              </div>
               <h3 class="lan-repo-title">lanscript-quake3</h3>
               <p class="lan-desc">
                 Python-driven LAN party server controller for the undisputed king of arena FPS. Instantly spins up dedicated Quake III instances with configurable tick rates, customized map cycles (q3dm6, q3dm17), weapon respawn timers, and client broadcast beacons.
@@ -695,16 +594,14 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
                   <i class="fa-regular fa-copy"></i> COPY CLONE
                 </button>
               </div>
-              <div class="code-content-box">
-<span class="term-muted"># Clone Quake III LAN orchestrator:</span>
+              <div class="code-content-box"><span class="term-muted"># Clone Quake III LAN orchestrator:</span>
 <span class="term-cyan">git clone https://github.com/cgarst/lanscript-quake3.git</span>
 <span class="term-muted">cd lanscript-quake3</span>
 
 <span class="term-muted"># Launch zero-configuration dedicated arena:</span>
 <span class="term-green">python3 q3_launcher.py --map q3dm17 --gametype ffa</span>
 <span class="term-muted">[*] Initializing Arena Gatekeeper...</span>
-<span class="term-amber">[OK] Server listening on UDP 27960 (The Longest Yard)</span>
-              </div>
+<span class="term-amber">[OK] Server listening on UDP 27960 (The Longest Yard)</span></div>
             </div>
           </div>
         </div>
@@ -713,10 +610,6 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
         <div class="lan-tab-panel" id="tab-reclaimer">
           <div class="lan-grid-detail">
             <div class="lan-info">
-              <div class="lan-info-header">
-                <span class="badge badge-cyan">HALO / RECLAIMER</span>
-                <span class="badge badge-purple">POWERSHELL</span>
-              </div>
               <h3 class="lan-repo-title">reclaimer-lan</h3>
               <p class="lan-desc">
                 Project Reclaimer LAN Scripts engineered to bootstrap local multiplayer sessions for classic Halo PC environments. Handles network bridge adapter detection, firewall rule overrides, and custom gametype distribution across LAN nodes.
@@ -759,16 +652,14 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
                   <i class="fa-regular fa-copy"></i> COPY CLONE
                 </button>
               </div>
-              <div class="code-content-box">
-<span class="term-muted"># Clone Project Reclaimer LAN suite:</span>
+              <div class="code-content-box"><span class="term-muted"># Clone Project Reclaimer LAN suite:</span>
 <span class="term-cyan">git clone https://github.com/cgarst/reclaimer-lan.git</span>
 <span class="term-muted">cd reclaimer-lan</span>
 
 <span class="term-muted"># Execute automated network provisioner:</span>
 <span class="term-green">.\reclaimer-setup.ps1 -Dedicated -Map "BloodGulch"</span>
 <span class="term-muted">[*] Configuring local adapter firewall ports...</span>
-<span class="term-amber">[OK] Slayer / CTF LAN session active</span>
-              </div>
+<span class="term-amber">[OK] Slayer / CTF LAN session active</span></div>
             </div>
           </div>
         </div>
@@ -778,7 +669,7 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
       <!-- GameStream & Repositories Highlight -->
       <div class="subrepos-header" id="other-tools">
         <div>
-          <h3 style="font-size: 1.5rem; font-weight: 700;">GameStream & Additional Tools</h3>
+          <h3 style="font-size: 1.5rem; font-weight: 700;">Past Projects & More</h3>
           <p style="color: var(--text-dim); font-size: 0.9rem;">Game streaming launchers and open-source homelab utilities.</p>
         </div>
       </div>
@@ -940,20 +831,8 @@ AVG SETLIST LENGTH: 18 TRACKS &bull; 108 MIN</div>
         </div>
 
         <div>
-          <h4 class="footer-col-title">Repositories & LAN</h4>
+          <h4 class="footer-col-title">Find Me Elsewhere</h4>
           <ul class="footer-links-list">
-            <li class="footer-link-item">
-              <a href="https://github.com/cgarst/lanscript-cod4" target="_blank" rel="noopener noreferrer">
-                <i class="fa-solid fa-code" style="color: var(--neon-emerald); font-size: 0.8rem;"></i>
-                lanscript-cod4 ↗
-              </a>
-            </li>
-            <li class="footer-link-item">
-              <a href="https://github.com/cgarst/lanscript-quake3" target="_blank" rel="noopener noreferrer">
-                <i class="fa-solid fa-code" style="color: var(--neon-emerald); font-size: 0.8rem;"></i>
-                lanscript-quake3 ↗
-              </a>
-            </li>
             <li class="footer-link-item">
               <a href="https://github.com/cgarst?tab=repositories" target="_blank" rel="noopener noreferrer">
                 <i class="fa-solid fa-cubes" style="color: var(--neon-amber); font-size: 0.8rem;"></i>

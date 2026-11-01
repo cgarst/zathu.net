@@ -226,7 +226,7 @@ code, pre, .font-mono {
 
 .hero-grid {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
   gap: 3rem;
   align-items: center;
 }
@@ -1200,6 +1200,8 @@ code, pre, .font-mono {
   line-height: 1.6;
   color: #38bdf8;
   position: relative;
+  white-space: pre;
+  overflow-x: auto;
 }
 
 .btn-copy-code {
@@ -1491,4 +1493,180 @@ code, pre, .font-mono {
   .lan-specs-table {
     grid-template-columns: 1fr;
   }
+}
+
+/* App icon panels (replace mockups) */
+.project-icon-panel {
+  align-items: center;
+  justify-content: center;
+}
+
+.project-app-icon {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.5));
+}
+
+.project-app-icon-round {
+  border-radius: 28px;
+}
+
+/* Notes / Arpeggiator slider */
+.arp-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0.75rem 0 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+.arp-label {
+  color: var(--text-dim);
+  transition: color 0.2s ease;
+}
+
+.arp-label.active {
+  color: var(--neon-cyan);
+  font-weight: 700;
+}
+
+.arp-switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.arp-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+
+.arp-slider {
+  position: absolute;
+  inset: 0;
+  background: #111522;
+  border: 1px solid var(--border-mid);
+  border-radius: 999px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  pointer-events: none;
+}
+
+.arp-slider::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+  transition: transform 0.2s ease;
+}
+
+.arp-switch input:checked + .arp-slider {
+  border-color: var(--neon-cyan);
+}
+
+.arp-switch input:checked + .arp-slider::before {
+  transform: translateX(24px);
+}
+
+.arp-switch input:focus-visible + .arp-slider {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+
+/* Glyph button replacing the LED cluster in the rack header */
+.rack-max-btn {
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  border-radius: 4px;
+  color: var(--neon-cyan);
+  font-size: 0.95rem;
+  line-height: 1;
+  width: 26px;
+  height: 22px;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rack-max-btn:hover,
+.rack-max-btn:focus-visible {
+  background: rgba(0, 240, 255, 0.12);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
+  outline: none;
+}
+
+/* Maximized rack: header + controls stay visible, the scope takes the remaining space */
+body.scope-max-open {
+  overflow: hidden;
+}
+
+.hardware-chassis-card.scope-maximized {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+  overflow-y: auto;
+}
+
+.scope-maximized .oscilloscope-screen-wrapper {
+  flex: 1;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.scope-maximized .oscilloscope-crt-frame {
+  flex: 1;
+  min-height: 0;
+}
+
+.scope-maximized .oscilloscope-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.scope-maximized .oscilloscope-meta {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Scope status: always two lines so the layout never shifts */
+#scope-status-text {
+  flex: 1 1 0;
+  min-width: 0;
+  line-height: 1.4;
+  min-height: 2.8em;
+  margin-right: 0.75rem;
+}
+
+.scope-wave-selector {
+  flex-shrink: 0;
+}
+
+.hero-hardware-panel {
+  min-width: 0;
+}
+
+/* .container creates a stacking context (z-index: 2), which trapped the maximized rack
+   beneath later sections and the sticky header; lift the hero's container while maximized. */
+body.scope-max-open .hero-section .container {
+  z-index: 10001;
 }
