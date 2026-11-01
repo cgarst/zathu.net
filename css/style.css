@@ -1793,3 +1793,18 @@ body.scope-max-open .hero-section .container {
 .arp-opt-btn:disabled {
   cursor: default;
 }
+
+/* − / + : dim and block when the count is at the end of its range */
+.arp-options:not(.is-off) .arp-step-btn:disabled {
+  opacity: 0.3;
+  color: var(--text-dim);
+  background: transparent;
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+.arp-options:not(.is-off) .arp-step-btn:not(:disabled) {
+  color: var(--neon-cyan);
+  border-color: rgba(0, 240, 255, 0.4);
+  cursor: pointer;
+}

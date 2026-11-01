@@ -308,15 +308,19 @@
       gain.gain.linearRampToValueAtTime(0.35, now + 0.018);
       gain.gain.linearRampToValueAtTime(0.28, now + 0.07);
 
+      // `rel` is a voice-level release stage kept apart from the note envelope, so letting go
+      // never has to cancel an envelope that is mid-ramp (that jump is what clicked)
+      const rel = audioCtx.createGain();
       osc.connect(filter);
       filter.connect(gain);
-      const trace = routeVoice(gain, null, type);
+      gain.connect(rel);
+      const trace = routeVoice(rel, null, type);
 
       osc.start(now);
 
       if (el) el.classList.add('key-pressed');
 
-      activeKeyVoices[keyId] = { osc, gain, filter, el, trace, pitches: [freqToMidi(freq)] };
+      activeKeyVoices[keyId] = { osc, gain, rel, filter, el, trace, pitches: [freqToMidi(freq)] };
     } catch (e) {
       console.warn('Start note voice error:', e);
     }
@@ -410,7 +414,9 @@
     voice.gain.gain.cancelScheduledValues(t);
     voice.gain.gain.setValueAtTime(0.0001, t);
     voice.gain.gain.linearRampToValueAtTime(0.32, t + Math.min(0.012, d * 0.2));
-    voice.gain.gain.exponentialRampToValueAtTime(0.14, t + d * 0.9);
+    voice.gain.gain.exponentialRampToValueAtTime(0.14, t + d * 0.75);
+    // Short release into silence before the next step, so pitch changes happen at ~zero level
+    voice.gain.gain.linearRampToValueAtTime(0.0001, t + d - 0.002);
     voice.arp.step++;
   }
 
@@ -479,14 +485,18 @@
       filter.frequency.setValueAtTime(arp.freqs[0] * 6, now);
       gain.gain.setValueAtTime(0.0001, now);
 
+      // `rel` is a voice-level release stage kept apart from the note envelope, so letting go
+      // never has to cancel an envelope that is mid-ramp (that jump is what clicked)
+      const rel = audioCtx.createGain();
       osc.connect(filter);
       filter.connect(gain);
-      const trace = routeVoice(gain, null, type);
+      gain.connect(rel);
+      const trace = routeVoice(rel, null, type);
       osc.start(now);
 
       if (el) el.classList.add('key-pressed');
       arp.step = 0;
-      const voice = { osc, gain, filter, el, trace, arp, isArp: true, pitches: arp.freqs.map(freqToMidi) };
+      const voice = { osc, gain, rel, filter, el, trace, arp, isArp: true, pitches: arp.freqs.map(freqToMidi) };
       activeKeyVoices[keyId] = voice;
       registerArpVoice(voice);
     } catch (e) {
@@ -524,11 +534,18 @@
 
     try {
       const now = audioCtx.currentTime;
-      voice.gain.gain.cancelScheduledValues(now);
-      voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
-      // Quick musical release fade out (0.09s)
-      voice.gain.gain.linearRampToValueAtTime(0.0001, now + 0.09);
-      voice.osc.stop(now + 0.11);
+      if (voice.rel) {
+        // Fade the release stage (always sitting at 1, nothing mid-ramp to cancel)
+        // (Step envelopes are left alone; any already-scheduled steps are covered by this fade)
+        voice.rel.gain.setValueAtTime(1, now);
+        voice.rel.gain.linearRampToValueAtTime(0.0001, now + 0.1);
+        voice.osc.stop(now + 0.13);
+      } else {
+        voice.gain.gain.cancelScheduledValues(now);
+        voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
+        voice.gain.gain.linearRampToValueAtTime(0.0001, now + 0.09);
+        voice.osc.stop(now + 0.11);
+      }
     } catch (e) {}
 
     if (voice.el) voice.el.classList.remove('key-pressed'); // 'key-held' is managed by refreshHeldKeyStates
