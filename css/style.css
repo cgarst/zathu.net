@@ -1204,29 +1204,7 @@ code, pre, .font-mono {
   overflow-x: auto;
 }
 
-.btn-copy-code {
-  position: absolute;
-  top: 0.85rem;
-  right: 1rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  padding: 0.3rem 0.65rem;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  transition: all 0.2s ease;
-}
 
-.btn-copy-code:hover {
-  background: rgba(0, 240, 255, 0.15);
-  border-color: var(--neon-cyan);
-  color: var(--neon-cyan);
-}
 
 /* Secondary Repos Grid (gamestream and repositories) */
 .subrepos-header {

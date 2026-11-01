@@ -1107,31 +1107,6 @@
         }
       });
     });
-
-    // Copy to clipboard
-    const copyBtns = document.querySelectorAll('.btn-copy-code');
-    const toast = document.getElementById('toast-notice');
-
-    copyBtns.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const textToCopy = btn.getAttribute('data-copy');
-        if (navigator.clipboard && textToCopy) {
-          navigator.clipboard.writeText(textToCopy).then(() => {
-            playClickBlip('high');
-            showToast('COPIED TO CLIPBOARD');
-          });
-        }
-      });
-    });
-
-    function showToast(msg) {
-      if (!toast) return;
-      toast.querySelector('.toast-msg').textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => {
-        toast.classList.remove('show');
-      }, 2500);
-    }
   }
 
   /* ==========================================================================
