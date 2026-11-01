@@ -320,7 +320,7 @@
 
       if (el) el.classList.add('key-pressed');
 
-      activeKeyVoices[keyId] = { osc, gain, rel, filter, el, trace, pitches: [freqToMidi(freq)] };
+      activeKeyVoices[keyId] = { osc, gain, rel, filter, el, trace, freq, pitches: [freqToMidi(freq)] };
     } catch (e) {
       console.warn('Start note voice error:', e);
     }
@@ -566,10 +566,35 @@
     return Math.round(69 + 12 * Math.log2(freq / 440));
   }
 
+  // Switch the waveform of everything currently being played (keys down, arpeggios, a scope drag).
+  // Sounds frozen by HOLD keep the waveform they had.
+  function applyWaveformToPlaying(type) {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const noteCutoff = { square: 3.5, sawtooth: 5.5, triangle: 4, sine: 8 };
+    Object.keys(activeKeyVoices).forEach((id) => {
+      const voice = activeKeyVoices[id];
+      voice.osc.type = type;
+      if (voice.trace) voice.trace.waveType = type; // scope color follows what is sounding
+      if (!voice.isArp && voice.freq) {
+        voice.filter.frequency.setValueAtTime(voice.freq * (noteCutoff[type] || 8), now);
+      }
+    });
+    if (isRibbonPlaying && ribbonOsc) {
+      ribbonOsc.type = type;
+      if (ribbonTrace) ribbonTrace.waveType = type;
+    }
+  }
+
   // Re-shape every arpeggio that is being played (not HOLD-frozen) after the note count / end note changes
-  function refreshPlayingArps() {
+  function refreshPlayingArps(rescale = false) {
     const apply = (voice) => {
       if (!voice || !voice.arp) return;
+      if (rescale) {
+        // Key or mode changed: the same scale degree now arpeggiates in the new scale
+        voice.arp.modeKey = state.currentMode;
+        voice.arp.rootMidi = state.rootMidi;
+      }
       const pattern = getArpPattern(voice.arp.startIndex, voice.arp.modeKey, voice.arp.rootMidi);
       voice.arp.freqs = pattern.freqs;
       voice.arp.stepSeconds = pattern.stepSeconds;
@@ -1206,7 +1231,10 @@
 
     function renderNumberButtons() {
       if (!container) return;
-      stopAllNoteVoices();
+      // Single notes belong to the old scale and stop; arpeggios being played carry on and re-scale below
+      Object.keys(activeKeyVoices).forEach((id) => {
+        if (!activeKeyVoices[id].isArp) stopNoteVoice(id);
+      });
       container.innerHTML = '';
 
       const modeKey = state.currentMode || 'minor';
@@ -1267,6 +1295,15 @@
       });
       refreshHeldKeyStates();
       if (updateArpControlsRef) updateArpControlsRef();
+
+      // Arpeggios still being played: follow the new key/mode and attach to the rebuilt buttons
+      Object.keys(activeKeyVoices).forEach((id) => {
+        const voice = activeKeyVoices[id];
+        const newEl = container.querySelector(`.synth-key[data-key="${id}"]`);
+        voice.el = newEl;
+        if (newEl) newEl.classList.add('key-pressed');
+      });
+      refreshPlayingArps(true);
     }
 
     // Notes / Arpeggiator slider
@@ -1497,6 +1534,7 @@
         btn.classList.add('active');
         state.currentWaveform = btn.getAttribute('data-wave');
         enableSound();
+        applyWaveformToPlaying(state.currentWaveform);
         playSynthNote(329.63, 0.5, state.currentWaveform);
         resetScopeStatus();
       });
