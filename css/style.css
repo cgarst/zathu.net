@@ -1469,6 +1469,25 @@ code, pre, .font-mono {
   .nav-links {
     display: none;
   }
+  /* Header: icon-only buttons so the logo and both links fit on a phone */
+  .nav-actions {
+    gap: 0.5rem;
+  }
+  .btn-github {
+    padding: 0.5rem 0.65rem;
+    font-size: 1rem;
+  }
+  .btn-github span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .brand-logo-img {
+    height: 34px;
+  }
   .hero-stats-row {
     grid-template-columns: 1fr 1fr;
     gap: 1.25rem;
