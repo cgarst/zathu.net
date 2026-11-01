@@ -1422,10 +1422,23 @@
       }
     }
     if (holdBtn) {
-      holdBtn.addEventListener('click', () => {
+      // iOS Safari does not synthesize a click while another finger is already down (e.g. a
+      // held note), so touch toggles on pointerdown and the click that may follow is ignored.
+      let lastTouchToggle = 0;
+      const toggleHold = () => {
         playClickBlip('high');
         setHold(!state.hold);
         holdBtn.blur();
+      };
+      holdBtn.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse') return;
+        e.preventDefault();
+        lastTouchToggle = Date.now();
+        toggleHold();
+      });
+      holdBtn.addEventListener('click', () => {
+        if (Date.now() - lastTouchToggle < 700) return;
+        toggleHold();
       });
     }
 
