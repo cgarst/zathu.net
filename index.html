@@ -380,20 +380,21 @@
                   <span class="code-dot"></span>
                   <span class="code-dot"></span>
                 </div>
-                <span>cod4-lan-deploy.cmd</span>
+                <span>COD4-LAUNCHER.bat</span>
                 <button class="btn-copy-code" data-copy="git clone https://github.com/cgarst/lanscript-cod4.git">
                   <i class="fa-regular fa-copy"></i> COPY CLONE
                 </button>
               </div>
-              <div class="code-content-box"><span class="term-muted"># Clone COD4 LAN toolkit to local machine:</span>
+              <div class="code-content-box"><span class="term-muted"># Get the scripts:</span>
 <span class="term-cyan">git clone https://github.com/cgarst/lanscript-cod4.git</span>
 <span class="term-muted">cd lanscript-cod4</span>
 
-<span class="term-muted"># Launch dedicated LAN server with broadcast:</span>
-<span class="term-green">call start_dedicated_server.bat</span>
-<span class="term-muted">[*] Discovering local IP subnet...</span>
-<span class="term-muted">[*] Initializing map rotation: Crash, Crossfire, Strike...</span>
-<span class="term-amber">[OK] COD4 dedicated server listening on 0.0.0.0:28960</span></div>
+<span class="term-muted"># Host a LAN game from bin\ (pick a mode):</span>
+<span class="term-green">bin\Launch_Gungame_server.bat</span>
+<span class="term-muted"># also: Pistol, RPG, Shotguns, Vanilla</span>
+
+<span class="term-muted"># Join a server on this PC:</span>
+<span class="term-green">bin\Connect_Local_Client.bat</span></div>
             </div>
           </div>
         </div>
@@ -420,19 +421,19 @@
                   <span class="code-dot"></span>
                   <span class="code-dot"></span>
                 </div>
-                <span>cod5-lan-deploy.cmd</span>
+                <span>COD5-LAUNCHER.bat</span>
                 <button class="btn-copy-code" data-copy="git clone https://github.com/cgarst/lanscript-cod5.git">
                   <i class="fa-regular fa-copy"></i> COPY CLONE
                 </button>
               </div>
-              <div class="code-content-box"><span class="term-muted"># Clone COD5: WaW LAN toolkit:</span>
+              <div class="code-content-box"><span class="term-muted"># Get the scripts (put retail CoD5 in bin\):</span>
 <span class="term-cyan">git clone https://github.com/cgarst/lanscript-cod5.git</span>
 <span class="term-muted">cd lanscript-cod5</span>
 
-<span class="term-muted"># Launch offline coop / zombie session:</span>
-<span class="term-green">call start_lan_coop.bat</span>
-<span class="term-muted">[*] Bypassing online profile check...</span>
-<span class="term-amber">[OK] Ready for Nacht der Untoten & Der Riese LAN</span></div>
+<span class="term-green">COD5-LAUNCHER.bat</span>
+<span class="term-muted">1. Launch COD WaW for Zombies/Coop</span>
+<span class="term-muted">2. Launch COD WaW for Deathmatch/Objectives</span>
+<span class="term-muted">3. Change player name</span></div>
             </div>
           </div>
         </div>
@@ -459,19 +460,20 @@
                   <span class="code-dot"></span>
                   <span class="code-dot"></span>
                 </div>
-                <span>q3_launcher.py</span>
+                <span>build_server_cfg.py</span>
                 <button class="btn-copy-code" data-copy="git clone https://github.com/cgarst/lanscript-quake3.git">
                   <i class="fa-regular fa-copy"></i> COPY CLONE
                 </button>
               </div>
-              <div class="code-content-box"><span class="term-muted"># Clone Quake III LAN orchestrator:</span>
+              <div class="code-content-box"><span class="term-muted"># Get the scripts:</span>
 <span class="term-cyan">git clone https://github.com/cgarst/lanscript-quake3.git</span>
-<span class="term-muted">cd lanscript-quake3</span>
+<span class="term-muted">cd lanscript-quake3\bin</span>
 
-<span class="term-muted"># Launch zero-configuration dedicated arena:</span>
-<span class="term-green">python3 q3_launcher.py --map q3dm17 --gametype ffa</span>
-<span class="term-muted">[*] Initializing Arena Gatekeeper...</span>
-<span class="term-amber">[OK] Server listening on UDP 27960 (The Longest Yard)</span></div>
+<span class="term-muted"># Scan baseq3\*.pk3 for maps and build a shuffled rotation:</span>
+<span class="term-green">python3 build_server_cfg.py</span>
+<span class="term-amber">RCON password: 4821</span>
+
+<span class="term-muted"># Wrote baseq3\server.cfg (q3dm17, q3dm1, then random maps)</span></div>
             </div>
           </div>
         </div>
@@ -498,19 +500,22 @@
                   <span class="code-dot"></span>
                   <span class="code-dot"></span>
                 </div>
-                <span>reclaimer-lan.ps1</span>
+                <span>start-campaign.ps1</span>
                 <button class="btn-copy-code" data-copy="git clone https://github.com/cgarst/reclaimer-lan.git">
                   <i class="fa-regular fa-copy"></i> COPY CLONE
                 </button>
               </div>
-              <div class="code-content-box"><span class="term-muted"># Clone Project Reclaimer LAN suite:</span>
+              <div class="code-content-box"><span class="term-muted"># Get the scripts:</span>
 <span class="term-cyan">git clone https://github.com/cgarst/reclaimer-lan.git</span>
 <span class="term-muted">cd reclaimer-lan</span>
 
-<span class="term-muted"># Execute automated network provisioner:</span>
-<span class="term-green">.\reclaimer-setup.ps1 -Dedicated -Map "BloodGulch"</span>
-<span class="term-muted">[*] Configuring local adapter firewall ports...</span>
-<span class="term-amber">[OK] Slayer / CTF LAN session active</span></div>
+<span class="term-muted"># Download the Project Reclaimer executables:</span>
+<span class="term-green">.\update-binaries.ps1</span>
+
+<span class="term-muted"># Start a server (co-op campaign or multiplayer playlist):</span>
+<span class="term-green">.\start-campaign.ps1</span>
+<span class="term-muted"># or .\start-multiplayer.ps1</span>
+<span class="term-amber">LAN players: Direct Connect to 192.168.1.20:12345</span></div>
             </div>
           </div>
         </div>
