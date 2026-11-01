@@ -949,6 +949,7 @@
         stopAllNoteVoices();
         state.arpMode = arpToggle.checked;
         syncArpUi();
+        arpToggle.blur();
       });
     }
 
@@ -980,9 +981,17 @@
       });
     });
 
+    // Ignore hotkeys only while typing in a text field (a focused checkbox/slider is fine)
+    function isTypingTarget(el) {
+      if (!el) return false;
+      if (el.tagName === 'TEXTAREA' || el.isContentEditable) return true;
+      if (el.tagName !== 'INPUT') return false;
+      return !['checkbox', 'radio', 'button', 'range'].includes(el.type);
+    }
+
     // Keyboard Hotkeys 1-8: Hold note while key is pressed down, quick fade out when released
     window.addEventListener('keydown', (e) => {
-      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (isTypingTarget(document.activeElement)) return;
       if (e.repeat) return; // Ignore auto-repeat key events to hold steady sustain
 
       const num = e.key;
@@ -993,7 +1002,7 @@
     });
 
     window.addEventListener('keyup', (e) => {
-      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (isTypingTarget(document.activeElement)) return;
 
       const num = e.key;
       if (num >= '1' && num <= '8') {
