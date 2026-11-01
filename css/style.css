@@ -1221,6 +1221,14 @@ code, pre, .font-mono {
   gap: 1.5rem;
 }
 
+.subrepos-grid-feature {
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+}
+
+.subrepos-grid > * {
+  min-width: 0;
+}
+
 .subrepo-card {
   background: rgba(14, 18, 29, 0.65);
   border: 1px solid var(--border-dim);
@@ -1257,6 +1265,8 @@ code, pre, .font-mono {
 
 .subrepo-footer {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
   justify-content: space-between;
   align-items: center;
   font-family: var(--font-mono);
@@ -1442,8 +1452,9 @@ code, pre, .font-mono {
   .lan-grid-detail {
     grid-template-columns: 1fr;
   }
-  .subrepos-grid {
-    grid-template-columns: 1fr 1fr;
+  .subrepos-grid,
+  .subrepos-grid-feature {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
   .philosophy-grid {
     grid-template-columns: 1fr;
@@ -1462,8 +1473,9 @@ code, pre, .font-mono {
     grid-template-columns: 1fr 1fr;
     gap: 1.25rem;
   }
-  .subrepos-grid {
-    grid-template-columns: 1fr;
+  .subrepos-grid,
+  .subrepos-grid-feature {
+    grid-template-columns: minmax(0, 1fr);
   }
   .project-feature-list {
     grid-template-columns: 1fr;
