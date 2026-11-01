@@ -6,6 +6,12 @@
 (function () {
   'use strict';
 
+  // iOS Safari ignores user-scalable=no, so block pinch via gesture events
+  // (double-tap zoom is handled by touch-action in the CSS).
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((t) => {
+    document.addEventListener(t, (e) => e.preventDefault());
+  });
+
   // State Management
   const state = {
     audioEnabled: true,
