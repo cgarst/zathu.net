@@ -123,6 +123,7 @@
   let ribbonTargetCents = 0;
   let ribbonCurrentCents = 0;
   let vibratoStartTime = 0;
+  let ribbonTrace = null;
 
   function initAudioContext() {
     if (!audioCtx) {
@@ -132,7 +133,7 @@
 
         // Master Analyser Node (real-time time-domain waveform analysis)
         masterAnalyser = audioCtx.createAnalyser();
-        masterAnalyser.fftSize = 1024;
+        masterAnalyser.fftSize = 2048;
         masterAnalyser.smoothingTimeConstant = 0.82;
 
         // Master Gain Node
@@ -151,6 +152,49 @@
   function enableSound() {
     state.audioEnabled = true;
     initAudioContext();
+  }
+
+  // Per-voice scope traces: each note routes through its own analyser (a pass-through
+  // into masterGain) so the scope can draw it faintly behind the summed waveform.
+  const voiceTraces = [];
+
+  function routeVoice(outNode, ttlSeconds = null) {
+    const an = audioCtx.createAnalyser();
+    an.fftSize = 2048;
+    an.smoothingTimeConstant = 0;
+    outNode.connect(an);
+    an.connect(masterGain);
+    const trace = {
+      an,
+      buf: new Uint8Array(an.fftSize),
+      releaseAt: ttlSeconds == null ? null : audioCtx.currentTime + ttlSeconds,
+    };
+    voiceTraces.push(trace);
+    return trace;
+  }
+
+  function releaseVoiceTrace(trace, afterSeconds = 0.15) {
+    if (trace && audioCtx) trace.releaseAt = audioCtx.currentTime + afterSeconds;
+  }
+
+  function pruneVoiceTraces() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    for (let i = voiceTraces.length - 1; i >= 0; i--) {
+      const t = voiceTraces[i];
+      if (t.releaseAt !== null && now > t.releaseAt) {
+        try { t.an.disconnect(); } catch (e) {}
+        voiceTraces.splice(i, 1);
+      }
+    }
+  }
+
+  // Oscilloscope-style trigger: first rising zero-crossing, so the picture holds still
+  function findTriggerIndex(buf, limit) {
+    for (let i = 1; i < limit; i++) {
+      if (buf[i - 1] < 128 && buf[i] >= 128) return i;
+    }
+    return 0;
   }
 
   // Play a synthesized note using the currently selected waveform
@@ -191,7 +235,7 @@
 
       osc.connect(filter);
       filter.connect(noteGain);
-      noteGain.connect(masterGain);
+      routeVoice(noteGain, duration + 0.1);
 
       osc.start(now);
       osc.stop(now + duration + 0.05);
@@ -238,13 +282,13 @@
 
       osc.connect(filter);
       filter.connect(gain);
-      gain.connect(masterGain);
+      const trace = routeVoice(gain);
 
       osc.start(now);
 
       if (el) el.classList.add('key-pressed');
 
-      activeKeyVoices[keyId] = { osc, gain, filter, el };
+      activeKeyVoices[keyId] = { osc, gain, filter, el, trace };
     } catch (e) {
       console.warn('Start note voice error:', e);
     }
@@ -286,7 +330,7 @@
 
       osc.connect(filter);
       filter.connect(gain);
-      gain.connect(masterGain);
+      const trace = routeVoice(gain);
       osc.start(now);
 
       let step = 0;
@@ -305,7 +349,7 @@
       const timer = setInterval(playStep, ARP_STEP_SECONDS * 1000);
 
       if (el) el.classList.add('key-pressed');
-      activeKeyVoices[keyId] = { osc, gain, filter, el, timer };
+      activeKeyVoices[keyId] = { osc, gain, filter, el, timer, trace };
     } catch (e) {
       console.warn('Start arp voice error:', e);
     }
@@ -326,6 +370,7 @@
     if (!voice || !audioCtx) return;
 
     if (voice.timer) clearInterval(voice.timer);
+    releaseVoiceTrace(voice.trace);
 
     try {
       const now = audioCtx.currentTime;
@@ -456,7 +501,7 @@
 
       ribbonOsc.connect(ribbonFilter);
       ribbonFilter.connect(ribbonGain);
-      ribbonGain.connect(masterGain);
+      ribbonTrace = routeVoice(ribbonGain);
 
       ribbonOsc.start(now);
       isRibbonPlaying = true;
@@ -519,6 +564,8 @@
     }
     try {
       const now = audioCtx.currentTime;
+      releaseVoiceTrace(ribbonTrace, 0.12);
+      ribbonTrace = null;
       ribbonGain.gain.linearRampToValueAtTime(0.0001, now + 0.06);
       if (ribbonOsc) {
         ribbonOsc.stop(now + 0.08);
@@ -606,7 +653,8 @@
 
     let phase = 0;
     let isMouseDownOnCanvas = false;
-    const analyserBuffer = new Uint8Array(1024);
+    const analyserBuffer = new Uint8Array(2048);
+    const TRACE_SAMPLES = 1024; // samples drawn per sweep (~21 ms), starting at the trigger point
 
     // Canvas Mouse & Touch Interaction (Acts as an interactive synth pad)
     canvas.addEventListener('mousedown', (e) => {
@@ -816,17 +864,41 @@
       }
 
       if (hasAudioSignal) {
-        // Draw real physical waveform from Web Audio analyser
-        const sliceWidth = width / analyserBuffer.length;
-        let x = 0;
-        for (let i = 0; i < analyserBuffer.length; i++) {
-          const v = analyserBuffer[i] / 128.0;
+        pruneVoiceTraces();
+
+        // Faint per-note traces behind the sum, each triggered on its own so they hold still.
+        // Voices tap in before masterGain, so scale them to their share of the mix.
+        const mixScale = masterGain ? masterGain.gain.value : 1;
+        if (voiceTraces.length > 1) {
+          ctx.save();
+          ctx.globalAlpha = 0.28;
+          ctx.lineWidth = 1.5;
+          ctx.shadowBlur = 0;
+          ctx.beginPath();
+          voiceTraces.forEach((t) => {
+            t.an.getByteTimeDomainData(t.buf);
+            const start = findTriggerIndex(t.buf, t.buf.length - TRACE_SAMPLES);
+            const step = width / TRACE_SAMPLES;
+            for (let i = 0; i < TRACE_SAMPLES; i++) {
+              const v = (t.buf[start + i] - 128) / 128.0;
+              const y = height / 2 + v * mixScale * (height / 2);
+              if (i === 0) ctx.moveTo(0, y);
+              else ctx.lineTo(i * step, y);
+            }
+          });
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Summed waveform (what you actually hear), triggered for a steady picture
+        const start = findTriggerIndex(analyserBuffer, analyserBuffer.length - TRACE_SAMPLES);
+        const sliceWidth = width / TRACE_SAMPLES;
+        for (let i = 0; i < TRACE_SAMPLES; i++) {
+          const v = analyserBuffer[start + i] / 128.0;
           const y = (v * height) / 2;
 
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-
-          x += sliceWidth;
+          if (i === 0) ctx.moveTo(0, y);
+          else ctx.lineTo(i * sliceWidth, y);
         }
       } else {
         // Standby guide wave reflecting selected waveform shape
