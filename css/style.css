@@ -601,7 +601,7 @@ code, pre, .font-mono {
   border-color: var(--neon-cyan);
 }
 
-.synth-key:active, .synth-key.key-pressed {
+.synth-key:active, .synth-key.key-pressed, .synth-key.key-held {
   transform: translateY(2px);
   box-shadow: 0 1px 0 #0d121c;
   background: rgba(0, 240, 255, 0.25);
@@ -1647,4 +1647,149 @@ body.scope-max-open {
    beneath later sections and the sticky header; lift the hero's container while maximized. */
 body.scope-max-open .hero-section .container {
   z-index: 10001;
+}
+
+/* Key buttons (replace the key dropdown): one even row of 12 chromatic notes */
+.key-btn-group {
+  display: flex;
+  gap: 0.3rem;
+  flex: 1 1 100%;
+  margin-bottom: 0.6rem;
+}
+
+.key-btn-group .key-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.25rem 0;
+  text-align: center;
+}
+
+.key-btn-group .key-btn-sharp {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-dim);
+}
+
+.key-btn-group .key-btn-sharp.active {
+  color: var(--neon-cyan);
+}
+
+/* HOLD button (sustain latch) */
+.hold-btn {
+  margin-left: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-dim);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.7rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hold-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+  border-color: var(--border-mid);
+}
+
+.hold-btn.active {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+}
+
+/* Mode buttons: justify to fill the full row width (wrapped rows stretch too) */
+.mode-btn-group {
+  flex: 1 1 100%;
+}
+
+.mode-btn-group .mode-btn {
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+.hold-key-hint {
+  opacity: 0.6;
+}
+
+/* No keyboard on touch-only devices: hide the [key] hints */
+@media (hover: none) and (pointer: coarse) {
+  .synth-key-shortcut,
+  .hold-key-hint {
+    display: none;
+  }
+}
+
+/* Arpeggio options */
+.arp-options {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0 0 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  transition: opacity 0.2s ease;
+}
+
+.arp-options.is-off {
+  opacity: 0.35;
+}
+
+.arp-opt-label {
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+}
+
+.arp-opt-gap {
+  margin-left: 0.75rem;
+}
+
+.arp-notes-val {
+  min-width: 1.2em;
+  text-align: center;
+  color: var(--neon-cyan);
+  font-weight: 700;
+}
+
+.arp-end-group {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.arp-opt-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-dim);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.arp-step-btn {
+  min-width: 1.6rem;
+  padding: 0.15rem 0;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.arp-opt-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+  border-color: var(--border-mid);
+}
+
+.arp-opt-btn.active {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+}
+
+.arp-opt-btn:disabled {
+  cursor: default;
 }

@@ -14,6 +14,9 @@
     rootMidi: 52, // E3 (164.81 Hz)
     currentMode: 'minor',
     arpMode: false,
+    hold: false,
+    arpNotes: 4,      // notes in the arpeggio (before it turns around)
+    arpEnd: 'octave', // 'octave' (ends on the octave, spread through it) or 'linear' (keeps climbing in thirds)
     commandHistory: [],
     historyIndex: -1,
   };
@@ -41,47 +44,52 @@
     'B': 59   // B3 (246.94 Hz)
   };
 
-  // Musical Modes & Scales (Ordered: Natural Minor, Harmonic Minor, Minor Pent, Modes, Major)
+  // Musical Modes & Scales (Ordered: Natural Minor, Harmonic Minor, Minor Pent, Major, Modes)
   const MODES = {
     'minor': {
       name: 'Natural Minor (Aeolian)',
       intervals: [0, 2, 3, 5, 7, 8, 10, 12],
-      degrees: ['1 (Root)', '2nd', 'b3', '4th', '5th', 'b6', 'b7', '8 (Oct)']
+      degrees: ['1st', '2nd', 'b3', '4th', '5th', 'b6', 'b7', '8 (Oct)']
     },
     'harmonic_minor': {
       name: 'Harmonic Minor',
       intervals: [0, 2, 3, 5, 7, 8, 11, 12],
-      degrees: ['1 (Root)', '2nd', 'b3', '4th', '5th', 'b6', '7th', '8 (Oct)']
+      degrees: ['1st', '2nd', 'b3', '4th', '5th', 'b6', '7th', '8 (Oct)']
     },
     'minor_pentatonic': {
       name: 'Minor Pentatonic',
       intervals: [0, 3, 5, 7, 10, 12],
-      degrees: ['1 (Root)', 'b3', '4th', '5th', 'b7', '8 (Oct)']
+      degrees: ['1st', 'b3', '4th', '5th', 'b7', '8 (Oct)']
     },
     'dorian': {
       name: 'Dorian',
       intervals: [0, 2, 3, 5, 7, 9, 10, 12],
-      degrees: ['1 (Root)', '2nd', 'b3', '4th', '5th', '6th', 'b7', '8 (Oct)']
+      degrees: ['1st', '2nd', 'b3', '4th', '5th', '6th', 'b7', '8 (Oct)']
     },
     'phrygian': {
       name: 'Phrygian',
       intervals: [0, 1, 3, 5, 7, 8, 10, 12],
-      degrees: ['1 (Root)', 'b2', 'b3', '4th', '5th', 'b6', 'b7', '8 (Oct)']
+      degrees: ['1st', 'b2', 'b3', '4th', '5th', 'b6', 'b7', '8 (Oct)']
     },
     'lydian': {
       name: 'Lydian (#4)',
       intervals: [0, 2, 4, 6, 7, 9, 11, 12],
-      degrees: ['1 (Root)', '2nd', '3rd', '#4', '5th', '6th', '7th', '8 (Oct)']
+      degrees: ['1st', '2nd', '3rd', '#4', '5th', '6th', '7th', '8 (Oct)']
     },
     'mixolydian': {
       name: 'Mixolydian',
       intervals: [0, 2, 4, 5, 7, 9, 10, 12],
-      degrees: ['1 (Root)', '2nd', '3rd', '4th', '5th', '6th', 'b7', '8 (Oct)']
+      degrees: ['1st', '2nd', '3rd', '4th', '5th', '6th', 'b7', '8 (Oct)']
     },
     'major': {
       name: 'Major (Ionian)',
       intervals: [0, 2, 4, 5, 7, 9, 11, 12],
-      degrees: ['1 (Root)', '2nd', '3rd', '4th', '5th', '6th', '7th', '8 (Oct)']
+      degrees: ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8 (Oct)']
+    },
+    'locrian': {
+      name: 'Locrian',
+      intervals: [0, 1, 3, 5, 6, 8, 10, 12],
+      degrees: ['1st', 'b2', 'b3', '4th', 'b5', 'b6', 'b7', '8 (Oct)']
     }
   };
 
@@ -124,6 +132,7 @@
   let ribbonCurrentCents = 0;
   let vibratoStartTime = 0;
   let ribbonTrace = null;
+  const latchedRibbons = []; // ribbon voices kept sounding by HOLD
 
   function initAudioContext() {
     if (!audioCtx) {
@@ -160,7 +169,7 @@
   const VOICE_TRACE_COLORS = ['#ec4899', '#fbbf24', '#10b981', '#c084fc', '#38bdf8', '#fb7185', '#a3e635', '#f97316'];
   let voiceColorCounter = 0;
 
-  function routeVoice(outNode, ttlSeconds = null) {
+  function routeVoice(outNode, ttlSeconds = null, waveType = null) {
     const an = audioCtx.createAnalyser();
     an.fftSize = 2048;
     an.smoothingTimeConstant = 0;
@@ -171,6 +180,7 @@
       buf: new Uint8Array(an.fftSize),
       releaseAt: ttlSeconds == null ? null : audioCtx.currentTime + ttlSeconds,
       color: VOICE_TRACE_COLORS[voiceColorCounter++ % VOICE_TRACE_COLORS.length],
+      waveType: waveType || state.currentWaveform || 'sine', // fixed at creation, so it survives later wave changes
     };
     voiceTraces.push(trace);
     return trace;
@@ -198,6 +208,21 @@
       if (buf[i - 1] < 128 && buf[i] >= 128) return i;
     }
     return 0;
+  }
+
+  function waveColorFor(type) {
+    if (type === 'square') return '#10b981';
+    if (type === 'sawtooth') return '#fbbf24';
+    if (type === 'triangle') return '#c084fc';
+    return '#00f0ff';
+  }
+
+  // Color of the summed trace: follows the waveform of the notes actually sounding,
+  // so changing the waveform button doesn't recolor notes that are already held.
+  function getSumWaveType() {
+    if (!voiceTraces.length) return state.currentWaveform;
+    const first = voiceTraces[0].waveType;
+    return voiceTraces.every((t) => t.waveType === first) ? first : 'mixed';
   }
 
   // Play a synthesized note using the currently selected waveform
@@ -238,7 +263,7 @@
 
       osc.connect(filter);
       filter.connect(noteGain);
-      routeVoice(noteGain, duration + 0.1);
+      routeVoice(noteGain, duration + 0.1, type);
 
       osc.start(now);
       osc.stop(now + duration + 0.05);
@@ -285,32 +310,149 @@
 
       osc.connect(filter);
       filter.connect(gain);
-      const trace = routeVoice(gain);
+      const trace = routeVoice(gain, null, type);
 
       osc.start(now);
 
       if (el) el.classList.add('key-pressed');
 
-      activeKeyVoices[keyId] = { osc, gain, filter, el, trace };
+      activeKeyVoices[keyId] = { osc, gain, filter, el, trace, pitches: [freqToMidi(freq)] };
     } catch (e) {
       console.warn('Start note voice error:', e);
     }
   }
 
-  // Arpeggiator: the pressed key picks the starting scale degree; a 6-note pattern
-  // (degrees +0, +2, +4, octave, +4, +2) climbs and falls through the selected scale while held.
-  const ARP_STEP_SECONDS = 0.13;
+  // Arpeggiator: the pressed key picks the starting scale degree. The pattern climbs through
+  // `state.arpNotes` notes and falls back, looping while the key is held.
+  //  - OCTAVE: the last note is the octave; the others are spread through it, favouring chord
+  //    tones (3 notes = root, 5th, octave; 4 = root, 3rd, 5th, octave).
+  //  - LINEAR: keeps climbing in thirds (root, 3rd, 5th, 7th, ...) so the end note is wherever it lands.
+  // The ascending run of notes always takes the same time, however many notes it has, so a
+  // 3-note arpeggio steps twice as slowly as a 6-note one. (Default 4 notes = 0.13 s per step.)
+  const ARP_RUN_SECONDS = 0.52;
+  const ARP_MIN_NOTES = 2;
+  const ARP_MAX_NOTES = 8;
 
-  function getArpFrequencies(startIndex) {
-    const modeKey = state.currentMode || 'minor';
-    const mode = MODES[modeKey] || MODES['minor'];
-    const n = mode.intervals.length;
-    const baseMidi = state.rootMidi || 52;
-    const midiAt = (i) => baseMidi + mode.intervals[i % n] + 12 * Math.floor(i / n);
-    return [0, 2, 4, n, 4, 2].map((step) => {
+  function getScaleSteps(mode) {
+    // Intervals include the octave (12) as their last entry, so one octave is length - 1 steps
+    return Math.max(1, mode.intervals.length - 1);
+  }
+
+  function getArpMaxNotes(mode, end) {
+    return end === 'octave' ? Math.min(ARP_MAX_NOTES, getScaleSteps(mode) + 1) : ARP_MAX_NOTES;
+  }
+
+  // Scale-degree offsets (from the pressed key) for the ascending half of the arpeggio
+  function getArpOffsets(mode, count, end) {
+    const S = getScaleSteps(mode);
+    const N = Math.max(ARP_MIN_NOTES, Math.min(count, getArpMaxNotes(mode, end)));
+
+    if (end === 'linear') {
+      return Array.from({ length: N }, (_, i) => i * 2);
+    }
+
+    // Degrees that sound like chord tones in this mode: root, a 3rd, the 5th (or ♭5), a 7th
+    const fifth = mode.intervals.includes(7) ? 7 : 6;
+    const chordSemis = new Set([0, 3, 4, fifth, 10, 11]);
+    const isChordTone = (d) => d < S && chordSemis.has(mode.intervals[d]);
+
+    const offsets = [0];
+    for (let i = 1; i <= N - 2; i++) {
+      const target = (i * S) / (N - 1);
+      const lo = offsets[offsets.length - 1] + 1;
+      const hi = S - (N - 1 - i); // leave room for the remaining notes
+      let pick = null;
+      for (let d = lo; d <= hi; d++) {
+        if (isChordTone(d) && Math.abs(d - target) <= 1 && (pick === null || Math.abs(d - target) < Math.abs(pick - target))) {
+          pick = d;
+        }
+      }
+      if (pick === null) pick = Math.max(lo, Math.min(hi, Math.round(target)));
+      offsets.push(pick);
+    }
+    offsets.push(S);
+    return offsets;
+  }
+
+  function getArpPattern(startIndex, modeKey = state.currentMode, rootMidi = state.rootMidi) {
+    const mode = MODES[modeKey || 'minor'] || MODES['minor'];
+    const S = getScaleSteps(mode);
+    const baseMidi = rootMidi || 52;
+    const midiAt = (i) => baseMidi + mode.intervals[i % S] + 12 * Math.floor(i / S);
+
+    const up = getArpOffsets(mode, state.arpNotes, state.arpEnd);
+    const down = up.slice(1, -1).reverse();
+    const freqs = up.concat(down).map((step) => {
       const midi = midiAt(startIndex + step);
       return 440 * Math.pow(2, (midi - 69) / 12);
     });
+    return { freqs, stepSeconds: ARP_RUN_SECONDS / up.length };
+  }
+
+  // One shared clock drives every arpeggio. Each arpeggio's steps sit on a grid anchored to the
+  // moment the first one started, so arpeggios started at different times stay in step (their
+  // grids all realign every ARP_RUN_SECONDS). A new arpeggio waits for its next grid point.
+  const arpVoices = new Set();
+  let arpClockTimer = null;
+  let arpOrigin = 0;
+  const ARP_LOOKAHEAD = 0.12;
+
+  function arpGridNext(t, stepSeconds) {
+    return arpOrigin + Math.ceil((t - arpOrigin) / stepSeconds - 1e-9) * stepSeconds;
+  }
+
+  function scheduleArpStep(voice, t) {
+    const freqs = voice.arp.freqs;
+    const f = freqs[voice.arp.step % freqs.length];
+    const d = voice.arp.stepSeconds;
+    voice.osc.frequency.setValueAtTime(f, t);
+    voice.filter.frequency.setValueAtTime(f * 6, t);
+    voice.gain.gain.cancelScheduledValues(t);
+    voice.gain.gain.setValueAtTime(0.0001, t);
+    voice.gain.gain.linearRampToValueAtTime(0.32, t + Math.min(0.012, d * 0.2));
+    voice.gain.gain.exponentialRampToValueAtTime(0.14, t + d * 0.9);
+    voice.arp.step++;
+  }
+
+  function arpClockTick() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    arpVoices.forEach((voice) => {
+      const arp = voice.arp;
+      // Fell behind (e.g. background tab throttling): jump back onto the grid instead of bursting
+      if (arp.nextTime < now - 0.05) arp.nextTime = arpGridNext(now, arp.stepSeconds);
+      while (arp.nextTime < now + ARP_LOOKAHEAD) {
+        scheduleArpStep(voice, arp.nextTime);
+        arp.lastStepTime = arp.nextTime;
+        arp.nextTime += arp.stepSeconds;
+      }
+    });
+  }
+
+  function registerArpVoice(voice) {
+    const now = audioCtx.currentTime;
+    if (arpClockTimer === null) {
+      arpOrigin = now + 0.02; // nothing else is playing: this arpeggio defines the grid
+      arpClockTimer = setInterval(arpClockTick, 25);
+    }
+    voice.arp.nextTime = Math.max(arpGridNext(now + 0.005, voice.arp.stepSeconds), arpOrigin);
+    arpVoices.add(voice);
+    arpClockTick();
+  }
+
+  // Change an arpeggio's note count live: keep it on the shared grid at its new step length
+  function retimeArpVoice(voice) {
+    const arp = voice.arp;
+    const from = Math.max(audioCtx.currentTime + 0.005, (arp.lastStepTime || 0) + 1e-6);
+    arp.nextTime = arpGridNext(from, arp.stepSeconds);
+  }
+
+  function unregisterArpVoice(voice) {
+    arpVoices.delete(voice);
+    if (arpVoices.size === 0 && arpClockTimer !== null) {
+      clearInterval(arpClockTimer);
+      arpClockTimer = null;
+    }
   }
 
   function startArpVoice(keyId, startIndex, el = null) {
@@ -319,7 +461,13 @@
     if (activeKeyVoices[keyId]) return;
 
     try {
-      const freqs = getArpFrequencies(startIndex);
+      // The arp remembers the scale it started in, so changing key/mode later can't re-pitch it
+      const arp = {
+        startIndex,
+        modeKey: state.currentMode,
+        rootMidi: state.rootMidi,
+        ...getArpPattern(startIndex),
+      };
       const type = state.currentWaveform || 'sine';
       const now = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
@@ -328,51 +476,50 @@
 
       osc.type = type;
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(freqs[0] * 6, now);
+      filter.frequency.setValueAtTime(arp.freqs[0] * 6, now);
       gain.gain.setValueAtTime(0.0001, now);
 
       osc.connect(filter);
       filter.connect(gain);
-      const trace = routeVoice(gain);
+      const trace = routeVoice(gain, null, type);
       osc.start(now);
 
-      let step = 0;
-      const playStep = () => {
-        const t = audioCtx.currentTime;
-        const f = freqs[step % freqs.length];
-        osc.frequency.setValueAtTime(f, t);
-        filter.frequency.setValueAtTime(f * 6, t);
-        gain.gain.cancelScheduledValues(t);
-        gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.linearRampToValueAtTime(0.32, t + 0.012);
-        gain.gain.exponentialRampToValueAtTime(0.14, t + ARP_STEP_SECONDS * 0.9);
-        step++;
-      };
-      playStep();
-      const timer = setInterval(playStep, ARP_STEP_SECONDS * 1000);
-
       if (el) el.classList.add('key-pressed');
-      activeKeyVoices[keyId] = { osc, gain, filter, el, timer, trace };
+      arp.step = 0;
+      const voice = { osc, gain, filter, el, trace, arp, isArp: true, pitches: arp.freqs.map(freqToMidi) };
+      activeKeyVoices[keyId] = voice;
+      registerArpVoice(voice);
     } catch (e) {
       console.warn('Start arp voice error:', e);
     }
   }
 
+  // Who started each sounding key ('pointer' or 'keyboard'). Only the source that started a voice
+  // can end it, so moving the mouse over (or off) a key that is already sounding never cuts it.
+  const keyOwners = {};
+
+  function releaseKey(keyId, source) {
+    if (keyOwners[keyId] === source && activeKeyVoices[keyId]) {
+      stopNoteVoice(keyId);
+    }
+  }
+
   // Start a held key in the current mode (plain note or arpeggio)
-  function triggerKey(keyId, el) {
+  function triggerKey(keyId, el, source = 'pointer') {
     if (!el) return;
+    if (activeKeyVoices[keyId]) return; // already sounding: leave it (and its owner) alone
     if (state.arpMode) {
       startArpVoice(keyId, parseInt(el.getAttribute('data-index'), 10) || 0, el);
     } else {
       startNoteVoice(keyId, parseFloat(el.getAttribute('data-freq')), el);
     }
+    if (activeKeyVoices[keyId]) keyOwners[keyId] = source;
   }
 
-  function stopNoteVoice(keyId) {
-    const voice = activeKeyVoices[keyId];
+  // Fade a voice out and tidy up its trace and key highlight
+  function endVoice(voice) {
     if (!voice || !audioCtx) return;
-
-    if (voice.timer) clearInterval(voice.timer);
+    if (voice.isArp) unregisterArpVoice(voice);
     releaseVoiceTrace(voice.trace);
 
     try {
@@ -384,12 +531,96 @@
       voice.osc.stop(now + 0.11);
     } catch (e) {}
 
-    if (voice.el) voice.el.classList.remove('key-pressed');
+    if (voice.el) voice.el.classList.remove('key-pressed'); // 'key-held' is managed by refreshHeldKeyStates
+  }
+
+  function stopNoteVoice(keyId) {
+    const voice = activeKeyVoices[keyId];
+    if (!voice) return;
     delete activeKeyVoices[keyId];
+    endVoice(voice);
   }
 
   function stopAllNoteVoices() {
     Object.keys(activeKeyVoices).forEach((id) => stopNoteVoice(id));
+  }
+
+  function freqToMidi(freq) {
+    return Math.round(69 + 12 * Math.log2(freq / 440));
+  }
+
+  // Re-shape every arpeggio that is being played (not HOLD-frozen) after the note count / end note changes
+  function refreshPlayingArps() {
+    const apply = (voice) => {
+      if (!voice || !voice.arp) return;
+      const pattern = getArpPattern(voice.arp.startIndex, voice.arp.modeKey, voice.arp.rootMidi);
+      voice.arp.freqs = pattern.freqs;
+      voice.arp.stepSeconds = pattern.stepSeconds;
+      retimeArpVoice(voice);
+      voice.pitches = voice.arp.freqs.map(freqToMidi);
+    };
+    Object.keys(activeKeyVoices).forEach((id) => apply(activeKeyVoices[id]));
+    // Arpeggios frozen by HOLD are left exactly as they were
+    refreshHeldKeyStates();
+  }
+
+  // Held sounds are remembered by pitch, so a key shows as held wherever that pitch
+  // appears after the key, mode or NOTES/ARPEGGIATOR changes.
+  function refreshHeldKeyStates() {
+    const heldMidis = new Set();
+    heldVoices.forEach((v) => (v.pitches || []).forEach((m) => heldMidis.add(m)));
+    latchedRibbons.forEach((r) => (r.pitches || []).forEach((m) => heldMidis.add(m)));
+    document.querySelectorAll('#synth-keys-container .synth-key').forEach((btn) => {
+      const midi = parseInt(btn.getAttribute('data-midi'), 10);
+      btn.classList.toggle('key-held', heldMidis.has(midi));
+    });
+  }
+
+  // HOLD: voices frozen by the HOLD button. They are detached from their keys, so the keys
+  // behave normally again and anything played afterwards is not part of the hold.
+  const heldVoices = [];
+
+  function captureHeldVoices() {
+    Object.keys(activeKeyVoices).forEach((id) => {
+      const voice = activeKeyVoices[id];
+      delete activeKeyVoices[id];
+      heldVoices.push(voice);
+      if (voice.el) voice.el.classList.remove('key-pressed');
+    });
+
+    // A note being dragged on the scope is frozen at its current pitch
+    if (isRibbonPlaying && ribbonOsc && ribbonGain) {
+      latchedRibbons.push({ osc: ribbonOsc, gain: ribbonGain, trace: ribbonTrace, pitches: [freqToMidi(ribbonBaseFreq)] });
+      ribbonTrace = null;
+      isRibbonPlaying = false;
+      ribbonActiveIndex = -1;
+      ribbonTargetCents = 0;
+      ribbonCurrentCents = 0;
+      clearHighlightedKeys();
+      resetScopeStatus();
+    }
+    refreshHeldKeyStates();
+  }
+
+  function releaseLatchedRibbons() {
+    while (latchedRibbons.length) {
+      const r = latchedRibbons.pop();
+      try {
+        const now = audioCtx.currentTime;
+        releaseVoiceTrace(r.trace, 0.12);
+        r.gain.gain.cancelScheduledValues(now);
+        r.gain.gain.setValueAtTime(r.gain.gain.value, now);
+        r.gain.gain.linearRampToValueAtTime(0.0001, now + 0.09);
+        r.osc.stop(now + 0.11);
+      } catch (e) {}
+    }
+  }
+
+  // Turn HOLD off: release everything it was holding
+  function releaseHeldVoices() {
+    while (heldVoices.length) endVoice(heldVoices.pop());
+    releaseLatchedRibbons();
+    refreshHeldKeyStates();
   }
 
   // UI Micro-click sound
@@ -504,7 +735,7 @@
 
       ribbonOsc.connect(ribbonFilter);
       ribbonFilter.connect(ribbonGain);
-      ribbonTrace = routeVoice(ribbonGain);
+      ribbonTrace = routeVoice(ribbonGain, null, ribbonOsc.type);
 
       ribbonOsc.start(now);
       isRibbonPlaying = true;
@@ -842,10 +1073,9 @@
       drawGrid();
 
       // Determine glow color based on waveform
-      let waveColor = '#00f0ff';
-      if (state.currentWaveform === 'square') waveColor = '#10b981';
-      else if (state.currentWaveform === 'sawtooth') waveColor = '#fbbf24';
-      else if (state.currentWaveform === 'triangle') waveColor = '#c084fc';
+      pruneVoiceTraces();
+      const sumWave = getSumWaveType();
+      const waveColor = sumWave === 'mixed' ? '#e2e8f0' : waveColorFor(sumWave);
 
       ctx.lineWidth = 2.5;
       ctx.strokeStyle = waveColor;
@@ -946,7 +1176,16 @@
   function initEModeSynth() {
     const container = document.getElementById('synth-keys-container');
     const modeBtns = document.querySelectorAll('#mode-buttons-group .mode-btn');
-    const rootSelect = document.getElementById('synth-root-select');
+    const keyBtns = document.querySelectorAll('#key-buttons-group .key-btn');
+    let updateArpControlsRef = null;
+
+    function syncKeyButtons(keyName) {
+      keyBtns.forEach((b) => {
+        const on = b.getAttribute('data-root') === keyName;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
 
     function renderNumberButtons() {
       if (!container) return;
@@ -969,6 +1208,7 @@
         btn.setAttribute('data-freq', freq.toFixed(2));
         btn.setAttribute('data-key', shortcut);
         btn.setAttribute('data-index', index);
+        btn.setAttribute('data-midi', midi);
         btn.setAttribute('title', `${noteName} (${freq.toFixed(1)} Hz) - ${degree}`);
 
         btn.innerHTML = `
@@ -980,34 +1220,36 @@
         // Mouse click & hold: sustains note while held, fades out on release
         btn.addEventListener('mousedown', (e) => {
           if (e.button !== 0) return;
-          triggerKey(shortcut, btn);
+          triggerKey(shortcut, btn, 'pointer');
         });
 
         btn.addEventListener('mouseup', () => {
-          stopNoteVoice(shortcut);
+          releaseKey(shortcut, 'pointer');
         });
 
         btn.addEventListener('mouseleave', () => {
-          stopNoteVoice(shortcut);
+          releaseKey(shortcut, 'pointer');
         });
 
         // Touch for mobile / tablet
         btn.addEventListener('touchstart', (e) => {
           e.preventDefault();
-          triggerKey(shortcut, btn);
+          triggerKey(shortcut, btn, 'pointer');
         }, { passive: false });
 
         btn.addEventListener('touchend', (e) => {
           e.preventDefault();
-          stopNoteVoice(shortcut);
+          releaseKey(shortcut, 'pointer');
         });
 
         btn.addEventListener('touchcancel', () => {
-          stopNoteVoice(shortcut);
+          releaseKey(shortcut, 'pointer');
         });
 
         container.appendChild(btn);
       });
+      refreshHeldKeyStates();
+      if (updateArpControlsRef) updateArpControlsRef();
     }
 
     // Notes / Arpeggiator slider
@@ -1023,24 +1265,98 @@
       syncArpUi();
       arpToggle.addEventListener('change', () => {
         playClickBlip('high');
-        stopAllNoteVoices();
+        stopAllNoteVoices(); // held sounds are separate and keep going
         state.arpMode = arpToggle.checked;
         syncArpUi();
+        if (updateArpControlsRef) updateArpControlsRef();
         arpToggle.blur();
       });
     }
 
-    // Root Key dropdown listener
-    if (rootSelect) {
-      rootSelect.value = state.rootNote || 'E';
-      rootSelect.addEventListener('change', () => {
-        playClickBlip('high');
-        const selectedKey = rootSelect.value;
-        state.rootNote = selectedKey;
-        state.rootMidi = ROOT_KEYS[selectedKey] || 52;
-        renderNumberButtons();
+    // Arpeggio options: note count and end note (only active while ARPEGGIATOR is on)
+    const arpOptions = document.getElementById('arp-options');
+    const arpDec = document.getElementById('arp-notes-dec');
+    const arpInc = document.getElementById('arp-notes-inc');
+    const arpVal = document.getElementById('arp-notes-val');
+    const arpEndBtns = document.querySelectorAll('#arp-options .arp-end-btn');
+
+    function updateArpControls() {
+      const mode = MODES[state.currentMode] || MODES['minor'];
+      const max = getArpMaxNotes(mode, state.arpEnd);
+      state.arpNotes = Math.max(ARP_MIN_NOTES, Math.min(state.arpNotes, max));
+      if (arpVal) arpVal.textContent = state.arpNotes;
+      if (arpOptions) arpOptions.classList.toggle('is-off', !state.arpMode);
+      const off = !state.arpMode;
+      if (arpDec) arpDec.disabled = off || state.arpNotes <= ARP_MIN_NOTES;
+      if (arpInc) arpInc.disabled = off || state.arpNotes >= max;
+      arpEndBtns.forEach((b) => {
+        const on = b.getAttribute('data-end') === state.arpEnd;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        b.disabled = off;
       });
     }
+    updateArpControlsRef = updateArpControls;
+
+    if (arpDec) arpDec.addEventListener('click', () => {
+      state.arpNotes -= 1;
+      playClickBlip('high');
+      updateArpControls();
+      refreshPlayingArps();
+      arpDec.blur();
+    });
+    if (arpInc) arpInc.addEventListener('click', () => {
+      state.arpNotes += 1;
+      playClickBlip('high');
+      updateArpControls();
+      refreshPlayingArps();
+      arpInc.blur();
+    });
+    arpEndBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.arpEnd = btn.getAttribute('data-end');
+        playClickBlip('high');
+        updateArpControls();
+        refreshPlayingArps();
+        btn.blur();
+      });
+    });
+    updateArpControls();
+
+    // HOLD (button or H): freezes what is sounding right now until HOLD is switched off.
+    // Notes and arpeggios played while HOLD is on behave normally and are not added to it.
+    const holdBtn = document.getElementById('hold-btn');
+    function setHold(on) {
+      if (on === state.hold) return;
+      state.hold = on;
+      if (on) captureHeldVoices();
+      else releaseHeldVoices();
+      if (holdBtn) {
+        holdBtn.classList.toggle('active', on);
+        holdBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+    }
+    if (holdBtn) {
+      holdBtn.addEventListener('click', () => {
+        playClickBlip('high');
+        setHold(!state.hold);
+        holdBtn.blur();
+      });
+    }
+
+    // Root Key buttons
+    syncKeyButtons(state.rootNote || 'E');
+    keyBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        playClickBlip('high');
+        const selectedKey = btn.getAttribute('data-root');
+        state.rootNote = selectedKey;
+        state.rootMidi = ROOT_KEYS[selectedKey] || 52;
+        syncKeyButtons(selectedKey);
+        btn.blur();
+        renderNumberButtons();
+      });
+    });
 
     // Mode buttons: switch active mode
     modeBtns.forEach((btn) => {
@@ -1071,10 +1387,18 @@
       if (isTypingTarget(document.activeElement)) return;
       if (e.repeat) return; // Ignore auto-repeat key events to hold steady sustain
 
+      if (e.key === 'h' || e.key === 'H') {
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+          playClickBlip('high');
+          setHold(!state.hold);
+        }
+        return;
+      }
+
       const num = e.key;
       if (num >= '1' && num <= '8') {
         const keyEl = container.querySelector(`.synth-key[data-key="${num}"]`);
-        if (keyEl) triggerKey(num, keyEl);
+        if (keyEl) triggerKey(num, keyEl, 'keyboard');
       }
     });
 
@@ -1083,7 +1407,7 @@
 
       const num = e.key;
       if (num >= '1' && num <= '8') {
-        stopNoteVoice(num);
+        releaseKey(num, 'keyboard');
       }
     });
 
@@ -1098,7 +1422,7 @@
       if (ROOT_KEYS[formatted]) {
         state.rootNote = formatted;
         state.rootMidi = ROOT_KEYS[formatted];
-        if (rootSelect) rootSelect.value = formatted;
+        syncKeyButtons(formatted);
         renderNumberButtons();
       }
     };
@@ -1125,7 +1449,7 @@
         if (ROOT_KEYS[formatted]) {
           state.rootNote = formatted;
           state.rootMidi = ROOT_KEYS[formatted];
-          if (rootSelect) rootSelect.value = formatted;
+          syncKeyButtons(formatted);
         }
       }
       if (modeArg && MODES[modeArg.toLowerCase()]) {
@@ -1149,7 +1473,7 @@
      ========================================================================== */
   function initHardwareToggles() {
     // Waveform switcher buttons
-    const waveBtns = document.querySelectorAll('.scope-btn');
+    const waveBtns = document.querySelectorAll('.scope-btn[data-wave]');
     waveBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
         waveBtns.forEach((b) => b.classList.remove('active'));
