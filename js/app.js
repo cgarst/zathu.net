@@ -157,6 +157,8 @@
   // Per-voice scope traces: each note routes through its own analyser (a pass-through
   // into masterGain) so the scope can draw it faintly behind the summed waveform.
   const voiceTraces = [];
+  const VOICE_TRACE_COLORS = ['#ec4899', '#fbbf24', '#10b981', '#c084fc', '#38bdf8', '#fb7185', '#a3e635', '#f97316'];
+  let voiceColorCounter = 0;
 
   function routeVoice(outNode, ttlSeconds = null) {
     const an = audioCtx.createAnalyser();
@@ -168,6 +170,7 @@
       an,
       buf: new Uint8Array(an.fftSize),
       releaseAt: ttlSeconds == null ? null : audioCtx.currentTime + ttlSeconds,
+      color: VOICE_TRACE_COLORS[voiceColorCounter++ % VOICE_TRACE_COLORS.length],
     };
     voiceTraces.push(trace);
     return trace;
@@ -871,11 +874,12 @@
         const mixScale = masterGain ? masterGain.gain.value : 1;
         if (voiceTraces.length > 1) {
           ctx.save();
-          ctx.globalAlpha = 0.28;
+          ctx.globalAlpha = 0.5;
           ctx.lineWidth = 1.5;
           ctx.shadowBlur = 0;
-          ctx.beginPath();
           voiceTraces.forEach((t) => {
+            ctx.beginPath();
+            ctx.strokeStyle = t.color;
             t.an.getByteTimeDomainData(t.buf);
             const start = findTriggerIndex(t.buf, t.buf.length - TRACE_SAMPLES);
             const step = width / TRACE_SAMPLES;
@@ -885,14 +889,15 @@
               if (i === 0) ctx.moveTo(0, y);
               else ctx.lineTo(i * step, y);
             }
+            ctx.stroke();
           });
-          ctx.stroke();
           ctx.restore();
         }
 
         // Summed waveform (what you actually hear), triggered for a steady picture
         const start = findTriggerIndex(analyserBuffer, analyserBuffer.length - TRACE_SAMPLES);
         const sliceWidth = width / TRACE_SAMPLES;
+        ctx.beginPath(); // start fresh: the per-note traces above used their own paths
         for (let i = 0; i < TRACE_SAMPLES; i++) {
           const v = analyserBuffer[start + i] / 128.0;
           const y = (v * height) / 2;
