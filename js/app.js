@@ -134,7 +134,38 @@
   let ribbonTrace = null;
   const latchedRibbons = []; // ribbon voices kept sounding by HOLD
 
+  // iOS routes Web Audio through the "ambient" category, which the ringer/silent
+  // switch mutes. Declaring a "playback" session (Audio Session API, Safari 16.4+) or,
+  // as a fallback, playing a silent looping <audio> element moves it to the media
+  // channel so sound is heard in silent mode. Must run inside a user gesture.
+  let silentAudioEl = null;
+  function unlockSilentModeAudio() {
+    try {
+      if (navigator.audioSession) navigator.audioSession.type = 'playback';
+    } catch (e) { /* unsupported */ }
+    if (silentAudioEl) return;
+    try {
+      // 0.25s of 8-bit mono silence as a WAV data URI.
+      const n = 2000, bytes = new Uint8Array(44 + n);
+      const dv = new DataView(bytes.buffer);
+      const str = (o, t) => { for (let i = 0; i < t.length; i++) bytes[o + i] = t.charCodeAt(i); };
+      str(0, 'RIFF'); dv.setUint32(4, 36 + n, true); str(8, 'WAVEfmt ');
+      dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+      dv.setUint32(24, 8000, true); dv.setUint32(28, 8000, true);
+      dv.setUint16(32, 1, true); dv.setUint16(34, 8, true);
+      str(36, 'data'); dv.setUint32(40, n, true);
+      bytes.fill(128, 44);
+      let bin = '';
+      bytes.forEach(b => { bin += String.fromCharCode(b); });
+      silentAudioEl = new Audio('data:audio/wav;base64,' + btoa(bin));
+      silentAudioEl.loop = true;
+      silentAudioEl.setAttribute('playsinline', '');
+      silentAudioEl.play().catch(() => {});
+    } catch (e) { /* ignore */ }
+  }
+
   function initAudioContext() {
+    unlockSilentModeAudio();
     if (!audioCtx) {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (AudioContextClass) {

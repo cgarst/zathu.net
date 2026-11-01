@@ -1682,6 +1682,15 @@ body.scope-max-open .hero-section .container {
   z-index: 10001;
 }
 
+/* Mobile browsers can still paint later sections over a fixed element, so hide the rest
+   of the page while maximized (visibility keeps layout, so scroll position is unchanged). */
+body.scope-max-open .site-header,
+body.scope-max-open .section,
+body.scope-max-open .site-footer,
+body.scope-max-open .hero-content {
+  visibility: hidden;
+}
+
 /* Key buttons (replace the key dropdown): one even row of 12 chromatic notes */
 .key-btn-group {
   display: flex;
