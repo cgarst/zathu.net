@@ -2,7 +2,7 @@
 //  - Same-origin files: network first (so a deploy shows up right away), cache as the offline fallback.
 //  - Fonts and icons from CDNs: cached on first use, refreshed in the background.
 // Bump CACHE only to drop old cached files; ordinary updates need no bump.
-const CACHE = 'fidgetbox-v2';
+const CACHE = 'fidgetbox-v3';
 
 const PRECACHE = [
   '/synth/',
