@@ -20,7 +20,7 @@ Deployed seamlessly under **GitHub Pages**.
 
 ## ⚡ Design System & Features
 
-- **Cyber-Hardware Aesthetic**: Inspired by analog rack gear, synthesizers, and vintage terminal interfaces.
+- **Launcher feel**: dark graphite panels, tactile press-down buttons, one hot orange, per-project accent colours. The synth is the hero, projects are a tile grid, and the LAN scripts are a server browser with copy-the-clone-command buttons. Set in Bricolage Grotesque.
 - **Interactive Oscilloscope Canvas**: Real-time waveform visualizer (Sine, Sawtooth, Square, Pulse) reacting to cursor movement and audio clicks.
 - **Web Audio Modal Synthesizer**: Chromatic root key selector and scale modes (Natural Minor, Harmonic Minor, Pentatonic, Dorian, Phrygian, Lydian, Mixolydian, Major) with auto-vibrato and hotkeys `[1]` through `[8]`.
 - **Standalone Synth App (`/synth/`)**: The same Fidget Box 3000 synth, maximized with none of the site around it. It is an installable PWA (manifest + service worker) that works offline after the first visit.
