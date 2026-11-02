@@ -4,7 +4,7 @@ export const SYNTH_HTML = `
   
   <div class="hardware-rack-header">
     <div class="rack-header-left">
-      <span class="rack-z" aria-hidden="true"></span>
+      <span class="rack-z-hit"><span class="rack-z" aria-hidden="true"></span></span>
       <span class="rack-title">Fidget Box 3000</span>
     </div>
     <div class="rack-header-right">

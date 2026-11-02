@@ -1,6 +1,7 @@
 import { enableSound, playSynthNote, playClickBlip } from './audio.js';
 import { MODES, OCTAVE_MAX, OCTAVE_MIN, ROOT_KEYS, getNoteNameFromMidi, rootMidiFor } from './music.js';
 import { ribbon, startRibbonTone, stopRibbonTone, updateRibbonTone } from './ribbon.js';
+import { TUNES } from './chorus.js';
 import { state } from './state.js';
 import { ARP_MIN_NOTES, activeKeyVoices, startNoteVoice, applyWaveformToPlaying, captureHeldVoices, getArpMaxNotes, refreshHeldKeyStates, refreshPlayingArps, releaseHeldVoices, releaseKey, stopAllNoteVoices, stopNoteVoice, triggerKey } from './voices.js';
 
@@ -302,12 +303,14 @@ export function initEModeSynth() {
       playSynthNote(440 * Math.pow(2, (state.rootMidi - 69) / 12), 0.5, state.currentWaveform);
     }
   }
-  if (randomBtn) randomBtn.addEventListener('click', () => { randomizeAll(); randomBtn.blur(); });
+  // A manual randomize (button or R) takes over from a Z song that is playing
+  const randomizeByHand = () => { endSong(); randomizeAll(); };
+  if (randomBtn) randomBtn.addEventListener('click', () => { randomizeByHand(); randomBtn.blur(); });
   randomizeAll(false); // always start from a random setup, silently
 
-  // Easter egg: tap the Z in the header and it plays a random "song" of about 10 seconds, then stops.
+  // Easter egg: tap the Z in the header and it plays a random "song" of about 12 seconds, then stops.
   // Each tap starts a fresh one. A song randomizes everything once, picks a chord progression and a
-  // style (how the chords and bass are played), then plays four bars of 16 steps with layers:
+  // style (how the chords and bass are played), then plays six bars of 16 steps with layers:
   //  - chords: a triad (sometimes with a 7th) on the bar's scale degree, as a held pad, syncopated
   //    stabs, off-beats or a pulse
   //  - bass: that chord's root an octave down
@@ -316,8 +319,8 @@ export function initEModeSynth() {
   // With the arpeggiator on, a held arpeggio replaces the chords and the lead thins out.
   // The last bar settles on the home chord and lets it ring out.
   const rackZ = document.querySelector('.rack-z');
-  const JAM_BAR_MS = 2500;
-  const JAM_BARS = 4;
+  const JAM_BAR_MS = 2000;
+  const JAM_BARS = 6;
   const JAM_STEPS = 16;
   let jamBarTimers = [];
   let jamPlaying = false;
@@ -478,12 +481,60 @@ export function initEModeSynth() {
     if (rackZ) rackZ.classList.remove('jamming');
   }
 
+  // One time in ten, the song is a famous tune instead, taken in turn from TUNES (starting at a random
+  // one): key, scale and octave are set to suit it and the melody, chords and bass are played from
+  // a transcription (10 to 17 seconds)
+  let tuneIdx = Math.floor(Math.random() * TUNES.length);
+  function startChorus(chosen) {
+    const tune = chosen || TUNES[tuneIdx];
+    if (!chosen) tuneIdx = (tuneIdx + 1) % TUNES.length;
+    endSong();
+    enableSound();
+    randomizeAll(false); // random sound, then pin down what the tune needs
+    state.currentMode = tune.mode;
+    modeBtns.forEach((b) => b.classList.toggle('active', b.getAttribute('data-mode') === state.currentMode));
+    state.rootNote = tune.root;
+    state.octave = tune.octave;
+    state.rootMidi = rootMidiFor(state.rootNote);
+    syncKeyButtons(state.rootNote);
+    updateOctaveControls();
+    stopAllNoteVoices();
+    state.arpMode = false;
+    if (arpToggle) arpToggle.checked = false;
+    if (arpLabelNotes) arpLabelNotes.classList.add('active');
+    if (arpLabelArp) arpLabelArp.classList.remove('active');
+    renderNumberButtons();
+    updateArpControls();
+    refreshPlayingArps();
+
+    jamPlaying = true;
+    if (rackZ) rackZ.classList.add('jamming');
+    const beatMs = 60000 / tune.bpm;
+    const keys = [...container.querySelectorAll('.synth-key')];
+    const layer = (notes, lift) => notes.forEach(([beat, len, midi]) => {
+      const note = midi + lift;
+      const id = 'jam-' + jamSeq++;
+      const el = keys.find((k) => parseInt(k.getAttribute('data-midi'), 10) === note) || null;
+      jamTimeouts.push(setTimeout(() => {
+        startNoteVoice(id, 440 * Math.pow(2, (note - 69) / 12), el);
+        jamVoiceIds.push(id);
+        jamTimeouts.push(setTimeout(() => stopNoteVoice(id), Math.max(60, len * beatMs * 0.92)));
+      }, beat * beatMs));
+    });
+    layer(tune.melody, 0);
+    layer(tune.chords, 0);
+    layer(tune.bass, 0);
+    const end = Math.max(...tune.melody.map(([b, l]) => b + l));
+    jamBarTimers.push(setTimeout(endSong, end * beatMs + 400));
+  }
+
   function startSong() {
+    if (chance(0.1)) { startChorus(); return; }
     endSong();
     enableSound();
     randomizeAll(false);
     // Progressions in scale degrees (0 = home); the last bar always returns home
-    const progressions = [[0, 3, 4, 0], [0, 5, 3, 0], [0, 4, 5, 0], [0, 3, 0, 0], [0, 2, 3, 0]];
+    const progressions = [[0, 3, 4, 0, 5, 0], [0, 5, 3, 4, 3, 0], [0, 4, 5, 3, 4, 0], [0, 3, 0, 4, 3, 0], [0, 2, 3, 4, 3, 0]];
     jamStyle = {
       progression: pick(progressions),
       comp: pick(['pad', 'stabs', 'offbeat', 'pulse']),
@@ -494,7 +545,7 @@ export function initEModeSynth() {
     // and always comes back to where it started for the last bar
     const home = state.octave;
     const nearby = (delta) => Math.max(OCTAVE_MIN, Math.min(OCTAVE_MAX, home + delta));
-    jamStyle.octaves = [home, nearby(pick([0, 0, 1, -1])), nearby(pick([0, 1, -1, 1])), home];
+    jamStyle.octaves = Array.from({ length: JAM_BARS }, (_, i) => (i === 0 || i === JAM_BARS - 1 ? home : nearby(pick([0, 0, 1, -1]))));
     jamPlaying = true;
     if (rackZ) rackZ.classList.add('jamming');
     for (let bar = 0; bar < JAM_BARS; bar++) {
@@ -506,7 +557,51 @@ export function initEModeSynth() {
     // Let the last chord ring, then stop
     jamBarTimers.push(setTimeout(endSong, JAM_BARS * JAM_BAR_MS + 300));
   }
-  if (rackZ) rackZ.addEventListener('click', startSong);
+  const rackZHit = document.querySelector('.rack-z-hit') || rackZ;
+  // Tap the Z seven times in quick succession to open a list of the tunes and pick one
+  const tuneMenu = document.createElement('div');
+  tuneMenu.className = 'tune-menu';
+  tuneMenu.setAttribute('role', 'menu');
+  tuneMenu.setAttribute('aria-label', 'Pick a tune');
+  tuneMenu.hidden = true;
+  const tuneMenuHead = document.createElement('div');
+  tuneMenuHead.className = 'tune-menu-head';
+  tuneMenuHead.textContent = 'Pick a tune';
+  tuneMenu.appendChild(tuneMenuHead);
+  [...TUNES].sort((x, y) => x.title.localeCompare(y.title)).forEach((tune) => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'tune-menu-item';
+    item.setAttribute('role', 'menuitem');
+    item.textContent = tune.title;
+    item.addEventListener('click', () => { closeTuneMenu(); startChorus(tune); });
+    tuneMenu.appendChild(item);
+  });
+  const menuHost = document.querySelector('.hardware-chassis-card');
+  if (menuHost) menuHost.appendChild(tuneMenu);
+  function closeTuneMenu() { tuneMenu.hidden = true; }
+  function openTuneMenu() {
+    endSong();
+    tuneMenu.hidden = false;
+    const first = tuneMenu.querySelector('.tune-menu-item');
+    if (first) first.focus();
+  }
+  let zTaps = 0;
+  let zTapTimer = null;
+  if (rackZHit) {
+    rackZHit.addEventListener('click', () => {
+      if (!tuneMenu.hidden) return; // the list stays up until a tune is picked
+      clearTimeout(zTapTimer);
+      zTaps++;
+      if (zTaps >= 7) {
+        zTaps = 0;
+        openTuneMenu();
+        return;
+      }
+      zTapTimer = setTimeout(() => { zTaps = 0; }, 700); // each tap must follow the last within 0.7 s
+      startSong();
+    });
+  }
 
   // Ignore hotkeys only while typing in a text field (a focused checkbox/slider is fine)
   function isTypingTarget(el) {
@@ -522,7 +617,7 @@ export function initEModeSynth() {
     if (e.repeat) return; // Ignore auto-repeat key events to hold steady sustain
 
     if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      randomizeAll();
+      randomizeByHand();
       return;
     }
 
