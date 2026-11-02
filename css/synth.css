@@ -1,624 +1,178 @@
-/* The synth rack (FIDGET BOX 3000). Shared by the site's hero and the /synth app. */
-/* Hero Hardware Rack Card / Oscilloscope */
+/* Fidget Box 3000: a pocket synth in Zathu's hardware language.
+   Shared by the site's hero and the /synth app. Graphite body, flat recessed screen,
+   one hot orange, keys that press down. */
+
 .hardware-chassis-card {
-  background: var(--bg-chassis);
-  border: 1px solid var(--border-mid);
-  border-radius: var(--radius-lg);
-  box-shadow: 
-    0 20px 50px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  overflow: hidden;
+  --fb-body: #1c1e22;
+  --fb-key: #2a2d33;
+  --fb-key-hi: #353941;
+  --fb-well: #0e0f11;
+  --fb-shade: #0a0b0d;
+  --fb-ink: #ece9e3;
+  --fb-dim: #a0a29f;
+  --fb-hot: #ff5a1f;
+  --fb-hot-dark: #b83a0a;
+  --fb-amber: #ffc766;
+  --fb-font: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
+
+  background: var(--fb-body);
+  color: var(--fb-ink);
+  font-family: var(--fb-font);
+  border-radius: 22px;
+  box-shadow: 0 8px 0 var(--fb-shade);
+  padding: 8px;
   position: relative;
+  overflow: hidden;
 }
 
+.hardware-chassis-card button { font-family: var(--fb-font); }
+.hardware-chassis-card button:focus-visible,
+.hardware-chassis-card input:focus-visible + .arp-slider { outline: 3px solid var(--fb-hot); outline-offset: 2px; }
+
+/* Header: the Z, the name, one button */
 .hardware-rack-header {
-  background: #090c14;
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid var(--border-dim);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
+  padding: 10px 12px 12px;
 }
-
-.rack-header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: var(--text-muted);
+.rack-header-left { display: flex; align-items: center; gap: 10px; }
+.rack-z {
+  width: 18px; height: 18px; background: var(--fb-hot);
+  clip-path: polygon(0 0, 100% 0, 100% 26%, 38% 74%, 100% 74%, 100% 100%, 0 100%, 0 74%, 62% 26%, 0 26%);
 }
+.rack-title { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; color: var(--fb-ink); }
+.rack-header-right { display: flex; align-items: center; gap: 8px; }
 
-.rack-screw {
-  width: 10px;
-  height: 10px;
-  background: #1e2638;
-  border-radius: 50%;
-  border: 1px solid #334155;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.8);
-  position: relative;
-}
-
-.rack-screw::before {
-  content: '';
-  position: absolute;
-  top: 4px; left: 2px; right: 2px; height: 1px;
-  background: #475569;
-}
-
-.rack-title {
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--neon-amber);
-}
-
-.rack-header-right {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.led-cluster {
-  display: flex;
-  gap: 0.35rem;
-}
-
-.led {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-
-.led-cyan { background: var(--neon-cyan); box-shadow: 0 0 6px var(--neon-cyan); }
-.led-magenta { background: var(--neon-magenta); box-shadow: 0 0 6px var(--neon-magenta); }
-.led-green { background: var(--neon-emerald); box-shadow: 0 0 6px var(--neon-emerald); }
-
-/* Oscilloscope Display with Permanent CRT Phosphor Tube */
-.oscilloscope-screen-wrapper {
-  background: #04070d;
-  position: relative;
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-dim);
-}
-
-.oscilloscope-crt-frame {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(0, 240, 255, 0.25);
-  box-shadow: 
-    inset 0 0 40px rgba(0, 0, 0, 0.95),
-    inset 0 0 15px rgba(0, 240, 255, 0.1),
-    0 0 20px rgba(0, 240, 255, 0.08);
-}
-
-.oscilloscope-canvas {
-  width: 100%;
-  height: 180px;
-  display: block;
-  touch-action: none; /* the wave is a pad: stop the browser claiming vertical swipes as scroll */
-  background: #020509;
-}
-
-/* Permanent CRT Phosphor Scanlines & Bezel Vignette */
-.oscilloscope-crt-scanlines {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  background: 
-    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.38) 50%),
-    radial-gradient(ellipse at center, rgba(0, 240, 255, 0.03) 0%, rgba(0, 0, 0, 0.55) 90%);
-  background-size: 100% 3px, 100% 100%;
-  border-radius: var(--radius-sm);
-  box-shadow: 
-    inset 0 0 35px rgba(0, 0, 0, 0.95),
-    inset 0 1px 1px rgba(255, 255, 255, 0.12);
-  mix-blend-mode: hard-light;
-}
-
-.oscilloscope-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.75rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--text-dim);
-}
-
-.scope-wave-selector {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.scope-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-dim);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 3px;
+/* Shared key feel */
+.rack-max-btn, .scope-btn, .mode-btn, .hold-btn, .arp-opt-btn {
+  background: var(--fb-key);
+  border: 0;
+  color: var(--fb-ink);
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
-}
-
-.scope-btn.active, .scope-btn:hover {
-  background: rgba(0, 240, 255, 0.15);
-  color: var(--neon-cyan);
-  border-color: var(--neon-cyan);
-}
-
-/* Interactive Key of E Scale / Mode Synthesizer */
-.synth-bar-controls {
-  padding: 1.25rem;
-  background: #0b0f19;
-}
-
-.mode-switcher-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.85rem;
-  font-family: var(--font-mono);
-}
-
-.mode-bar-label {
-  font-size: 0.72rem;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-weight: 700;
-}
-
-.root-key-selector {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.synth-select {
-  background: #111827;
-  border: 1px solid var(--border-mid);
-  color: var(--neon-cyan);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 0.2rem 0.5rem;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.synth-select:hover, .synth-select:focus {
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.25);
-}
-
-.mode-btn-group {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-}
-
-.mode-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-dim);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
   font-weight: 600;
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.18s ease;
+  box-shadow: 0 3px 0 var(--fb-shade);
+  transition: transform .12s cubic-bezier(.22,1,.36,1), box-shadow .12s cubic-bezier(.22,1,.36,1), background-color .15s;
 }
-
-.mode-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-main);
-  border-color: var(--border-mid);
+.rack-max-btn:hover, .scope-btn:hover, .mode-btn:hover, .hold-btn:hover, .arp-opt-btn:hover:not(:disabled) { background: var(--fb-key-hi); }
+.rack-max-btn:active, .scope-btn:active, .mode-btn:active, .hold-btn:active, .arp-opt-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--fb-shade); transition-duration: .04s; }
+.scope-btn.active, .mode-btn.active, .hold-btn.active, .arp-opt-btn.active {
+  background: var(--fb-hot); color: #160700; box-shadow: 0 3px 0 var(--fb-hot-dark);
 }
+.scope-btn.active:active, .mode-btn.active:active, .hold-btn.active:active, .arp-opt-btn.active:active { box-shadow: 0 0 0 var(--fb-hot-dark); }
 
-.mode-btn.active {
-  background: rgba(0, 240, 255, 0.15);
-  color: var(--neon-cyan);
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
-}
+.rack-max-btn { font-size: .85rem; padding: 7px 12px; }
 
-/* Number buttons row: strictly flex single-row on desktop */
-.synth-keys-grid {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 0.3rem;
-  width: 100%;
-}
-
-.synth-key {
-  flex: 1 1 0;
-  min-width: 0;
-  background: #151c2c;
-  border: 1px solid #25334d;
-  border-radius: var(--radius-sm);
-  padding: 0.55rem 0.1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  user-select: none;
-  transition: all 0.12s ease;
-  box-shadow: 0 3px 0 #0d121c;
-  text-align: center;
-  overflow: hidden;
-}
-
-.synth-key:hover {
-  background: #1c273e;
-  border-color: var(--neon-cyan);
-}
-
-.synth-key:active, .synth-key.key-pressed, .synth-key.key-held {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 #0d121c;
-  background: rgba(0, 240, 255, 0.25);
-  border-color: var(--neon-cyan);
-}
-
-.synth-note-name {
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--text-main);
-  white-space: nowrap;
-}
-
-.synth-key-degree {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  color: var(--text-dim);
-  margin-top: 0.1rem;
-  white-space: nowrap;
-}
-
-.synth-key.is-root .synth-key-degree {
-  color: var(--neon-cyan);
-  font-weight: 700;
-}
-
-.synth-key-shortcut {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  color: #64748b;
-  margin-top: 0.15rem;
-}
-
-.arp-switcher {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  margin: 0.75rem 0 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-}
-
-.arp-label {
-  color: var(--text-dim);
-  transition: color 0.2s ease;
-}
-
-.arp-label.active {
-  color: var(--neon-cyan);
-  font-weight: 700;
-}
-
-.arp-switch {
+/* Screen: a flat recessed well */
+.oscilloscope-screen-wrapper {
+  background: var(--fb-well);
+  border-radius: 16px;
+  padding: 10px 10px 12px;
   position: relative;
-  display: inline-block;
-  width: 46px;
-  height: 22px;
-  cursor: pointer;
 }
+.oscilloscope-crt-frame { position: relative; overflow: hidden; border-radius: 10px; }
+.oscilloscope-canvas { width: 100%; height: 180px; display: block; touch-action: none; background: var(--fb-well); }
 
-.arp-switch input {
-  position: absolute;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  cursor: pointer;
+.oscilloscope-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding: 0 2px; font-size: .9rem; color: var(--fb-dim); }
+.scope-wave-selector { display: flex; gap: 8px; flex-shrink: 0; }
+.scope-btn { font-size: .82rem; padding: 6px 11px; }
+
+/* Controls */
+.synth-bar-controls { padding: 14px 6px 8px; }
+.mode-switcher-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.key-btn-group { display: flex; gap: 6px; flex: 1 1 100%; }
+.key-btn-group .key-btn { flex: 1 1 0; min-width: 0; padding: 8px 0; text-align: center; font-size: .85rem; }
+.key-btn-group .key-btn-sharp:not(.active) { background: #222429; color: var(--fb-dim); }
+.mode-btn-group { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 100%; }
+.mode-btn-group .mode-btn { flex: 1 1 auto; text-align: center; font-size: .85rem; padding: 8px 10px; }
+
+/* The eight note keys: big, chunky, they press down */
+.synth-keys-grid { display: flex; flex-wrap: nowrap; gap: 8px; width: 100%; }
+.synth-key {
+  flex: 1 1 0; min-width: 0;
+  background: var(--fb-key); border: 0; border-radius: 12px;
+  padding: 18px 2px 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px;
+  cursor: pointer; user-select: none; text-align: center; overflow: hidden;
+  box-shadow: 0 6px 0 var(--fb-shade);
+  transition: transform .1s cubic-bezier(.22,1,.36,1), box-shadow .1s cubic-bezier(.22,1,.36,1), background-color .12s;
 }
-
-.arp-slider {
-  position: absolute;
-  inset: 0;
-  background: #111522;
-  border: 1px solid var(--border-mid);
-  border-radius: 999px;
-  transition: background 0.2s ease, border-color 0.2s ease;
-  pointer-events: none;
+.synth-key:hover { background: var(--fb-key-hi); }
+.synth-key:active, .synth-key.key-pressed, .synth-key.key-held {
+  transform: translateY(5px); box-shadow: 0 1px 0 var(--fb-shade);
+  background: var(--fb-hot); transition-duration: .04s;
 }
+.synth-note-name { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; color: var(--fb-ink); white-space: nowrap; }
+.synth-key-degree { font-size: .72rem; color: var(--fb-dim); white-space: nowrap; }
+.synth-key-shortcut { font-size: .72rem; font-weight: 700; color: var(--fb-dim); margin-top: 8px; }
+.synth-key.is-root .synth-key-degree { color: var(--fb-hot); font-weight: 700; }
+.synth-key:active .synth-note-name, .synth-key.key-pressed .synth-note-name, .synth-key.key-held .synth-note-name,
+.synth-key:active .synth-key-degree, .synth-key.key-pressed .synth-key-degree, .synth-key.key-held .synth-key-degree,
+.synth-key:active .synth-key-shortcut, .synth-key.key-pressed .synth-key-shortcut, .synth-key.key-held .synth-key-shortcut { color: #160700; }
 
+/* Notes / arpeggiator switch, hold */
+.arp-switcher { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 18px 0 10px; font-size: .9rem; }
+.arp-label { color: var(--fb-dim); transition: color .2s; }
+.arp-label.active { color: var(--fb-ink); font-weight: 700; }
+.arp-switch { position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer; }
+.arp-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.arp-slider { position: absolute; inset: 0; background: var(--fb-well); border-radius: 999px; pointer-events: none; }
 .arp-slider::before {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--neon-cyan);
-  box-shadow: 0 0 8px var(--neon-cyan);
-  transition: transform 0.2s ease;
+  content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--fb-dim);
+  transition: transform .3s cubic-bezier(0.34, 1.36, 0.64, 1), background-color .2s;
 }
+.arp-switch input:checked + .arp-slider::before { transform: translateX(24px); background: var(--fb-hot); }
+.hold-btn { margin-left: 10px; font-size: .85rem; padding: 6px 12px; }
+.hold-key-hint { opacity: .6; margin-left: 4px; }
 
-.arp-switch input:checked + .arp-slider {
-  border-color: var(--neon-cyan);
-}
+.arp-options { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 8px; font-size: .85rem; transition: opacity .2s; }
+.arp-options.is-off { opacity: .4; }
+.arp-opt-label { color: var(--fb-dim); }
+.arp-opt-gap { margin-left: 12px; }
+.arp-notes-val { min-width: 1.4em; text-align: center; color: var(--fb-ink); font-weight: 800; }
+.arp-end-group { display: flex; gap: 6px; }
+.arp-opt-btn { font-size: .8rem; padding: 5px 10px; }
+.arp-step-btn { min-width: 30px; padding: 4px 0; font-size: 1rem; line-height: 1; }
+.arp-opt-btn:disabled { cursor: not-allowed; opacity: .4; }
 
-.arp-switch input:checked + .arp-slider::before {
-  transform: translateX(24px);
-}
-
-.arp-switch input:focus-visible + .arp-slider {
-  outline: 2px solid var(--neon-cyan);
-  outline-offset: 2px;
-}
-
-/* Glyph button replacing the LED cluster in the rack header */
-.rack-max-btn {
-  background: transparent;
-  border: 1px solid var(--border-mid);
-  border-radius: 4px;
-  color: var(--neon-cyan);
-  font-size: 0.95rem;
-  line-height: 1;
-  width: 26px;
-  height: 22px;
-  padding: 0;
-  cursor: pointer;
-  transition: background 0.15s ease, box-shadow 0.15s ease;
-}
-
-.rack-max-btn:hover,
-.rack-max-btn:focus-visible {
-  background: rgba(0, 240, 255, 0.12);
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
-  outline: none;
-}
-
-/* Maximized rack: header + controls stay visible, the scope takes the remaining space */
-body.scope-max-open {
-  overflow: hidden;
-}
-
-.hardware-chassis-card.scope-maximized {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: flex;
-  flex-direction: column;
-  border-radius: 0;
-  overflow-y: auto;
-}
-
-.scope-maximized .oscilloscope-screen-wrapper {
-  flex: 1;
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-}
-
-.scope-maximized .oscilloscope-crt-frame {
-  flex: 1;
-  min-height: 0;
-}
-
-.scope-maximized .oscilloscope-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.scope-maximized .oscilloscope-meta {
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-/* Scope status: always two lines so the layout never shifts */
-#scope-status-text {
-  flex: 1 1 0;
-  min-width: 0;
-  line-height: 1.4;
-  min-height: 2.8em;
-  margin-right: 0.75rem;
-}
-
-.scope-wave-selector {
-  flex-shrink: 0;
-}
-
-/* Key buttons (replace the key dropdown): one even row of 12 chromatic notes */
-.key-btn-group {
-  display: flex;
-  gap: 0.3rem;
-  flex: 1 1 100%;
-  margin-bottom: 0.6rem;
-}
-
-.key-btn-group .key-btn {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 0.25rem 0;
-  text-align: center;
-}
-
-.key-btn-group .key-btn-sharp {
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--text-dim);
-}
-
-.key-btn-group .key-btn-sharp.active {
-  color: var(--neon-cyan);
-}
-
-/* HOLD button (sustain latch) */
-.hold-btn {
-  margin-left: 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-dim);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  padding: 0.2rem 0.7rem;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.hold-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-main);
-  border-color: var(--border-mid);
-}
-
-.hold-btn.active {
-  background: rgba(0, 240, 255, 0.15);
-  color: var(--neon-cyan);
-  border-color: var(--neon-cyan);
-}
-
-/* Mode buttons: justify to fill the full row width (wrapped rows stretch too) */
-.mode-btn-group {
-  flex: 1 1 100%;
-}
-
-.mode-btn-group .mode-btn {
-  flex: 1 1 auto;
-  text-align: center;
-}
-
-.hold-key-hint {
-  opacity: 0.6;
-}
-
-/* No keyboard on touch-only devices: hide the [key] hints */
+/* Hints that need a keyboard */
 @media (hover: none) and (pointer: coarse) {
-  .synth-key-shortcut,
-  .hold-key-hint {
-    display: none;
-  }
+  .synth-key-shortcut, .hold-key-hint { display: none; }
 }
 
-/* Arpeggio options */
-.arp-options {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  margin: 0 0 0.6rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  transition: opacity 0.2s ease;
+/* Maximized: header and controls stay visible, the screen takes the remaining space */
+body.scope-max-open { overflow: hidden; }
+.hardware-chassis-card.scope-maximized {
+  position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column;
+  border-radius: 0; box-shadow: none; overflow-y: auto; padding: 8px 12px 12px;
 }
+.scope-maximized .oscilloscope-screen-wrapper { flex: 1; min-height: 200px; display: flex; flex-direction: column; }
+.scope-maximized .oscilloscope-crt-frame { flex: 1; min-height: 0; }
+.scope-maximized .oscilloscope-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.scope-maximized .oscilloscope-meta { flex-wrap: wrap; gap: 8px; }
 
-.arp-options.is-off {
-  opacity: 0.35;
-}
+/* Status: always two lines so nothing shifts */
+#scope-status-text { flex: 1 1 0; min-width: 0; line-height: 1.35; min-height: 2.7em; margin-right: 12px; }
 
-.arp-opt-label {
-  color: var(--text-dim);
-  letter-spacing: 0.08em;
-}
-
-.arp-opt-gap {
-  margin-left: 0.75rem;
-}
-
-.arp-notes-val {
-  min-width: 1.2em;
-  text-align: center;
-  color: var(--neon-cyan);
-  font-weight: 700;
-}
-
-.arp-end-group {
-  display: flex;
-  gap: 0.3rem;
-}
-
-.arp-opt-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-dim);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.arp-step-btn {
-  min-width: 1.6rem;
-  padding: 0.15rem 0;
-  font-size: 0.8rem;
-  line-height: 1;
-}
-
-.arp-opt-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-main);
-  border-color: var(--border-mid);
-}
-
-.arp-opt-btn.active {
-  background: rgba(0, 240, 255, 0.15);
-  color: var(--neon-cyan);
-  border-color: var(--neon-cyan);
-}
-
-.arp-opt-btn:disabled {
-  cursor: default;
-}
-
-/* − / + : dim and block when the count is at the end of its range */
-.arp-options:not(.is-off) .arp-step-btn:disabled {
-  opacity: 0.3;
-  color: var(--text-dim);
-  background: transparent;
-  border-style: dashed;
-  cursor: not-allowed;
-}
-
-.arp-options:not(.is-off) .arp-step-btn:not(:disabled) {
-  color: var(--neon-cyan);
-  border-color: rgba(0, 240, 255, 0.4);
-  cursor: pointer;
-}
-
-/* /synth app (body.synth-app): the rack always fills the viewport, so no maximize toggle,
-   and the safe areas keep it clear of notches and the home indicator when installed. */
-body.synth-app .rack-max-btn {
-  display: none;
-}
-
+/* The /synth app (body.synth-app): the rack fills the viewport, no full-screen toggle,
+   safe areas keep it clear of notches and the home indicator when installed. */
+body.synth-app { background: #131416; }
+body.synth-app::before { display: none; }
+body.synth-app .rack-max-btn { display: none; }
 body.synth-app .hardware-chassis-card.scope-maximized {
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: calc(8px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+}
+
+@media (max-width: 560px) {
+  .key-btn-group { gap: 4px; }
+  .synth-keys-grid { gap: 5px; }
+  .synth-key { padding: 14px 0 10px; border-radius: 10px; }
+  .oscilloscope-meta { flex-direction: column; align-items: stretch; gap: 10px; }
+  .scope-wave-selector { flex-wrap: wrap; }
+  .scope-btn { flex: 1 1 auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hardware-chassis-card *, .hardware-chassis-card *::before { transition-duration: .01ms !important; }
 }

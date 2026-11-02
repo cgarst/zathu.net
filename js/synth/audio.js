@@ -66,7 +66,7 @@ export function enableSound() {
 // Per-voice scope traces: each note routes through its own analyser (a pass-through
 // into audio.master) so the scope can draw it faintly behind the summed waveform.
 export const voiceTraces = [];
-export const VOICE_TRACE_COLORS = ['#ec4899', '#fbbf24', '#10b981', '#c084fc', '#38bdf8', '#fb7185', '#a3e635', '#f97316'];
+export const VOICE_TRACE_COLORS = ['#ff5a1f', '#ffc766', '#7dff9a', '#6ef8fb', '#ff8fb8', '#b9a6ff', '#e8f77a', '#ffa066'];
 let voiceColorCounter = 0;
 
 export function routeVoice(outNode, ttlSeconds = null, waveType = null) {
@@ -111,10 +111,10 @@ export function findTriggerIndex(buf, limit) {
 }
 
 export function waveColorFor(type) {
-  if (type === 'square') return '#10b981';
-  if (type === 'sawtooth') return '#fbbf24';
-  if (type === 'triangle') return '#c084fc';
-  return '#00f0ff';
+  if (type === 'square') return '#7dff9a';
+  if (type === 'sawtooth') return '#ffc766';
+  if (type === 'triangle') return '#6ef8fb';
+  return '#ff5a1f';
 }
 
 // Color of the summed trace: follows the waveform of the notes actually sounding,

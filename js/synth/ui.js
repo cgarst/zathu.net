@@ -21,19 +21,19 @@ export function updateScopeStatus(freq, cutoff, noteName = null, degree = null, 
   if (noteName) {
     const roundedTarget = Math.round(targetCents);
     const vibActive = Math.abs(roundedTarget) > 2;
-    const vibText = vibActive ? `VIB ${roundedTarget > 0 ? '+' : ''}${roundedTarget}¢` : 'VIB 0';
-    const vibColor = vibActive ? 'var(--neon-amber)' : 'var(--text-dim)';
+    const vibText = vibActive ? `Vibrato ${roundedTarget > 0 ? '+' : ''}${roundedTarget}¢` : 'No vibrato';
+    const vibColor = vibActive ? 'var(--fb-amber)' : 'var(--fb-dim)';
     const instantFreq = freq * Math.pow(2, cents / 1200);
 
-    statusEl.innerHTML = `<span style="color: var(--neon-cyan); font-weight: 700;">${noteName}</span> <span style="color: var(--text-dim);">${degree}</span> &bull; ${instantFreq.toFixed(0)} Hz<br><span style="color: ${vibColor};">${vibText}</span>`;
+    statusEl.innerHTML = `<span style="color: var(--fb-hot); font-weight: 700;">${noteName}</span> <span style="color: var(--fb-dim);">${degree}</span> &bull; ${instantFreq.toFixed(0)} Hz<br><span style="color: ${vibColor};">${vibText}</span>`;
   } else {
-    statusEl.innerHTML = `<span style="color: var(--neon-cyan); font-weight: 700;">FREQ: ${Math.round(freq)} Hz</span><br><span style="color: var(--neon-amber);">CUTOFF: ${Math.round(cutoff)} Hz</span>`;
+    statusEl.innerHTML = `<span style="color: var(--fb-hot); font-weight: 700;">${Math.round(freq)} Hz</span><br><span style="color: var(--fb-amber);">Filter ${Math.round(cutoff)} Hz</span>`;
   }
 }
 
 export function resetScopeStatus() {
   const statusEl = document.getElementById('scope-status-text');
   if (statusEl) {
-    statusEl.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> DRAG WAVE TO PLAY`;
+    statusEl.innerHTML = 'Drag the wave to play';
   }
 }

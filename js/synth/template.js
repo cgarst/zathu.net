@@ -4,28 +4,26 @@ export const SYNTH_HTML = `
   
   <div class="hardware-rack-header">
     <div class="rack-header-left">
-      <div class="rack-screw"></div>
-      <span class="rack-title">FIDGET BOX 3000</span>
+      <span class="rack-z" aria-hidden="true"></span>
+      <span class="rack-title">Fidget Box 3000</span>
     </div>
     <div class="rack-header-right">
-      <button type="button" class="rack-max-btn" id="scope-maximize-btn" aria-pressed="false" aria-label="Maximize synth rack to full viewport" title="Maximize to full viewport">⛶</button>
+      <button type="button" class="rack-max-btn" id="scope-maximize-btn" aria-pressed="false" aria-label="Full screen">Full screen</button>
     </div>
   </div>
 
-  <!-- Canvas Visualizer Screen with Permanent CRT Phosphor Tube -->
   <div class="oscilloscope-screen-wrapper">
     <div class="oscilloscope-crt-frame">
       <canvas id="oscilloscope-canvas" class="oscilloscope-canvas" width="460" height="180" style="cursor: crosshair;"></canvas>
-      <div class="oscilloscope-crt-scanlines" aria-hidden="true"></div>
     </div>
-    
+
     <div class="oscilloscope-meta">
-      <span id="scope-status-text"><i class="fa-solid fa-hand-pointer"></i> DRAG WAVE TO PLAY</span>
-      <div class="scope-wave-selector">
-        <button class="scope-btn active" data-wave="sine" title="Pure smooth sine wave">SINE</button>
-        <button class="scope-btn" data-wave="sawtooth" title="Bright rich sawtooth wave">SAW</button>
-        <button class="scope-btn" data-wave="square" title="Crunchy 8-bit square wave">SQUARE</button>
-        <button class="scope-btn" data-wave="triangle" title="Warm mellow triangle wave">TRIANGLE</button>
+      <span id="scope-status-text">Drag the wave to play</span>
+      <div class="scope-wave-selector" role="group" aria-label="Waveform">
+        <button class="scope-btn active" data-wave="sine" title="Pure smooth sine wave">Sine</button>
+        <button class="scope-btn" data-wave="sawtooth" title="Bright rich sawtooth wave">Saw</button>
+        <button class="scope-btn" data-wave="square" title="Crunchy 8-bit square wave">Square</button>
+        <button class="scope-btn" data-wave="triangle" title="Warm mellow triangle wave">Triangle</button>
       </div>
     </div>
   </div>
@@ -62,29 +60,29 @@ export const SYNTH_HTML = `
 
     <!-- Keys behavior slider: single notes vs. 6-note arpeggio -->
     <div class="arp-switcher" role="group" aria-label="Key behavior">
-      <span id="arp-label-notes" class="arp-label active">NOTES</span>
+      <span id="arp-label-notes" class="arp-label active">Notes</span>
       <label class="arp-switch" title="Slide to switch keys between single notes and a 6-note arpeggio">
         <input type="checkbox" id="arp-toggle" aria-label="Arpeggiator mode">
         <span class="arp-slider"></span>
       </label>
-      <span id="arp-label-arp" class="arp-label">ARPEGGIATOR</span>
-      <button type="button" class="hold-btn" id="hold-btn" aria-pressed="false" aria-keyshortcuts="H" title="Freeze the sounds playing right now until HOLD is switched off (H)">HOLD <span class="hold-key-hint">[H]</span></button>
+      <span id="arp-label-arp" class="arp-label">Arpeggiator</span>
+      <button type="button" class="hold-btn" id="hold-btn" aria-pressed="false" aria-keyshortcuts="H" title="Freeze the sounds playing right now until HOLD is switched off (H)">Hold <span class="hold-key-hint">H</span></button>
     </div>
 
     <!-- Arpeggio options (active only in ARPEGGIATOR mode) -->
     <div class="arp-options is-off" id="arp-options" role="group" aria-label="Arpeggio options">
-      <span class="arp-opt-label">NOTES</span>
+      <span class="arp-opt-label">Notes</span>
       <button type="button" class="arp-opt-btn arp-step-btn" id="arp-notes-dec" aria-label="Fewer notes">&minus;</button>
       <span class="arp-notes-val" id="arp-notes-val" aria-live="polite">4</span>
       <button type="button" class="arp-opt-btn arp-step-btn" id="arp-notes-inc" aria-label="More notes">+</button>
-      <span class="arp-opt-label arp-opt-gap">END</span>
+      <span class="arp-opt-label arp-opt-gap">Ending</span>
       <div class="arp-end-group">
-        <button type="button" class="arp-opt-btn arp-end-btn" data-end="linear" aria-pressed="false" title="Keep climbing in thirds">LINEAR</button>
-        <button type="button" class="arp-opt-btn arp-end-btn active" data-end="octave" aria-pressed="true" title="Finish on the octave, spreading the notes through it">OCTAVE</button>
+        <button type="button" class="arp-opt-btn arp-end-btn" data-end="linear" aria-pressed="false" title="Keep climbing in thirds">Linear</button>
+        <button type="button" class="arp-opt-btn arp-end-btn active" data-end="octave" aria-pressed="true" title="Finish on the octave, spreading the notes through it">Octave</button>
       </div>
     </div>
 
-    <!-- Interactive Number Buttons [1] through [8] (Click or Keys 1-8) -->
+    <!-- Note keys 1 to 8 (click, tap, or press the number) -->
     <div class="synth-keys-grid" id="synth-keys-container"></div>
   </div>
 

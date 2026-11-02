@@ -50,7 +50,7 @@ export function initEModeSynth() {
       btn.innerHTML = `
         <span class="synth-note-name">${noteName}</span>
         <span class="synth-key-degree">${degree}</span>
-        <span class="synth-key-shortcut">[${shortcut}]</span>
+        <span class="synth-key-shortcut">${shortcut}</span>
       `;
 
       // Mouse click & hold: sustains note while held, fades out on release

@@ -37,7 +37,7 @@ export function initOscilloscope({ standalone = false } = {}) {
       maxBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
       maxBtn.setAttribute('aria-label', on ? 'Restore synth rack size' : 'Maximize synth rack to full viewport');
       maxBtn.setAttribute('title', on ? 'Restore (Esc)' : 'Maximize to full viewport');
-      maxBtn.textContent = on ? '✕' : '⛶';
+      maxBtn.textContent = on ? 'Close' : 'Full screen';
     }
     resizeScopeCanvas();
   }
@@ -116,56 +116,27 @@ export function initOscilloscope({ standalone = false } = {}) {
     const N = notes.length || 8;
     const zoneWidth = width / N;
 
-    // Draw subtle scale note column dividers
-    for (let i = 0; i <= N; i++) {
-      const x = i * zoneWidth;
-      ctx.strokeStyle = i === 0 || i === N ? 'rgba(0, 240, 255, 0.12)' : 'rgba(0, 240, 255, 0.06)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
-    }
+    // Alternate note columns in a slightly lighter flat tone (no lines)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.035)';
+    for (let i = 0; i < N; i += 2) ctx.fillRect(i * zoneWidth, 0, zoneWidth, height);
 
-    // Horizontal grid lines
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.04)';
-    for (let y = 0; y < height; y += 30) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
-    }
-
-    // Center crosshairs
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
+    // Center line (0 cents)
+    ctx.strokeStyle = 'rgba(236, 233, 227, 0.14)';
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, height / 2);
     ctx.lineTo(width, height / 2);
     ctx.stroke();
 
-    // Subtle center guide ticks in the middle of each bar (marking 0 cents)
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
-    ctx.setLineDash([2, 5]);
-    for (let i = 0; i < N; i++) {
-      const cX = (i + 0.5) * zoneWidth;
-      ctx.beginPath();
-      ctx.moveTo(cX, 18);
-      ctx.lineTo(cX, height - 16);
-      ctx.stroke();
-    }
-    ctx.setLineDash([]);
-
-    // If ribbon note is active, draw illuminated column, middle anchor, and animated vibrato indicator
+    // The note being played: its column lights up, with the vibrato marker
     if (ribbon.playing && ribbon.activeIndex >= 0 && ribbon.activeIndex < N) {
       const xLeft = ribbon.activeIndex * zoneWidth;
       const noteCenterX = (ribbon.activeIndex + 0.5) * zoneWidth;
 
-      // Illuminated bar
-      ctx.fillStyle = 'rgba(0, 240, 255, 0.08)';
+      ctx.fillStyle = 'rgba(255, 90, 31, 0.16)';
       ctx.fillRect(xLeft, 0, zoneWidth, height);
 
-      // 0-cents center line: strictly in the middle of the bar displayed
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.55)';
+      ctx.strokeStyle = 'rgba(255, 90, 31, 0.6)';
       ctx.setLineDash([3, 3]);
       ctx.beginPath();
       ctx.moveTo(noteCenterX, 0);
@@ -173,49 +144,33 @@ export function initOscilloscope({ standalone = false } = {}) {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // "0¢" label directly on the middle line
-      ctx.font = '9px "JetBrains Mono", monospace';
-      ctx.fillStyle = 'rgba(0, 240, 255, 0.85)';
-      ctx.textAlign = 'center';
-      ctx.fillText('0¢', noteCenterX, height / 2 - 14);
-
-      // If user has dragged away from the middle of the bar to select vibrato depth
       if (Math.abs(ribbon.targetCents) > 2) {
-        // Where user is selecting (target depth marker)
-        ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
+        ctx.strokeStyle = 'rgba(255, 199, 102, 0.6)';
         ctx.beginPath();
         ctx.moveTo(ribbon.currentX, 0);
         ctx.lineTo(ribbon.currentX, height);
         ctx.stroke();
 
-        // Animated oscillating orb moving back and forth between 0 cents (middle of the bar: noteCenterX) and selection (ribbon.currentX)
         const lfoFactor = ribbon.targetCents !== 0 ? (ribbon.currentCents / ribbon.targetCents) : 0;
         const oscX = noteCenterX + (ribbon.currentX - noteCenterX) * lfoFactor;
 
-        ctx.fillStyle = '#00f0ff';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#00f0ff';
+        ctx.fillStyle = '#ffc766';
         ctx.beginPath();
-        ctx.arc(oscX, height / 2, 4.5, 0, Math.PI * 2);
+        ctx.arc(oscX, height / 2, 5, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
       }
     }
 
-    // Draw Note Names on top and Key Shortcuts on bottom of canvas
-    ctx.font = '10px "JetBrains Mono", monospace';
+    // Note names on top, number keys at the bottom
+    ctx.font = '600 12px "Bricolage Grotesque", system-ui, sans-serif';
     ctx.textAlign = 'center';
     for (let i = 0; i < N; i++) {
       const centerX = (i + 0.5) * zoneWidth;
       const isActive = ribbon.playing && ribbon.activeIndex === i;
-
-      // Note name on top
-      ctx.fillStyle = isActive ? '#00f0ff' : 'rgba(148, 163, 184, 0.45)';
-      ctx.fillText(notes[i].noteName, centerX, 13);
-
-      // Key shortcut on bottom
-      ctx.fillStyle = isActive ? '#38bdf8' : 'rgba(100, 116, 139, 0.35)';
-      ctx.fillText(`[${notes[i].shortcut}]`, centerX, height - 5);
+      ctx.fillStyle = isActive ? '#ff5a1f' : 'rgba(236, 233, 227, 0.62)';
+      ctx.fillText(notes[i].noteName, centerX, 16);
+      ctx.fillStyle = isActive ? '#ece9e3' : 'rgba(236, 233, 227, 0.42)';
+      ctx.fillText(`${notes[i].shortcut}`, centerX, height - 7);
     }
   }
 
@@ -238,7 +193,7 @@ export function initOscilloscope({ standalone = false } = {}) {
       }
     }
 
-    ctx.fillStyle = '#04070c';
+    ctx.fillStyle = '#0e0f11';
     ctx.fillRect(0, 0, width, height);
 
     drawGrid();
@@ -246,12 +201,12 @@ export function initOscilloscope({ standalone = false } = {}) {
     // Determine glow color based on waveform
     pruneVoiceTraces();
     const sumWave = getSumWaveType();
-    const waveColor = sumWave === 'mixed' ? '#e2e8f0' : waveColorFor(sumWave);
+    const waveColor = sumWave === 'mixed' ? '#ece9e3' : waveColorFor(sumWave);
 
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3;
+    ctx.lineJoin = 'round';
     ctx.strokeStyle = waveColor;
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = waveColor;
+    ctx.shadowBlur = 0;
 
     ctx.beginPath();
 
