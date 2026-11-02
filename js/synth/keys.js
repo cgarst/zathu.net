@@ -580,7 +580,6 @@ export function initEModeSynth() {
     const nearby = (delta) => Math.max(OCTAVE_MIN, Math.min(OCTAVE_MAX, home + delta));
     jamStyle.octaves = Array.from({ length: JAM_BARS }, (_, i) => (i === 0 || i === JAM_BARS - 1 ? home : nearby(pick([0, 0, 1, -1]))));
     jamPlaying = true;
-    if (rackZ) rackZ.classList.add('jamming');
     for (let bar = 0; bar < JAM_BARS; bar++) {
       jamBarTimers.push(setTimeout(() => {
         if (bar > 0) setOctave(jamStyle.octaves[bar]);
