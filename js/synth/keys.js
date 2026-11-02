@@ -408,7 +408,7 @@ export function initEModeSynth() {
       const base = onWave ? 0 : S; // the wave spans one octave from the root; the keys lead sits an octave up
       const lo = onWave ? 0 : S - 2;
       let d = base + (chordTones.has(0) ? 0 : root + 2);
-      let jamTouch = { x: (S / 2 + 0.5) * (scopeCanvas ? scopeCanvas.width / (S + 1) : 0), y: rand(0.2, 0.8), down: false }; // the virtual finger
+      let jamTouch = { x: (S / 2 + 0.5) * (scopeCanvas ? scopeCanvas.clientWidth / (S + 1) : 0), y: rand(0.2, 0.8), down: false }; // the virtual finger
       rhythm.forEach((st, i) => {
         const nextSt = i + 1 < rhythm.length ? rhythm[i + 1] : JAM_STEPS;
         const last = i === rhythm.length - 1;
@@ -435,8 +435,8 @@ export function initEModeSynth() {
         // (sliding across the pad glides through the scale, offset from a note's centre = vibrato
         // depth) and y sweeps the filter. Notes that follow on slide in from the previous one, and
         // some are long swoops across several notes.
-        const w = scopeCanvas.width;
-        const h = scopeCanvas.height;
+        const w = scopeCanvas.clientWidth;
+        const h = scopeCanvas.clientHeight;
         const zone = w / (S + 1);
         const fromX = jamTouch.x;
         const fromY = jamTouch.y;

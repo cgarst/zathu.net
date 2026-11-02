@@ -14,13 +14,60 @@ export function initOscilloscope({ standalone = false } = {}) {
   const ctx = canvas.getContext('2d');
 
   const scopeFrame = canvas.parentElement;
-  let width = (canvas.width = scopeFrame.clientWidth);
-  let height = (canvas.height = scopeFrame.clientHeight || 180);
+  // The canvas backing store matches the screen's real pixels (drawing code keeps working in CSS
+  // pixels through the transform), so lines and the pixel font stay sharp instead of being upscaled
+  let dpr = 1;
+  let width = 0;
+  let height = 0;
 
   function resizeScopeCanvas() {
     if (!scopeFrame) return;
-    width = canvas.width = scopeFrame.clientWidth;
-    height = canvas.height = scopeFrame.clientHeight || 180;
+    dpr = window.devicePixelRatio || 1;
+    width = scopeFrame.clientWidth;
+    height = scopeFrame.clientHeight || 180;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resizeScopeCanvas();
+
+  // 8-bit labels: a 5x7 bitmap font drawn as whole device pixels, so nothing is anti-aliased
+  const GLYPHS = {
+    '0': '01110 10001 10011 10101 11001 10001 01110', '1': '00100 01100 00100 00100 00100 00100 01110',
+    '2': '01110 10001 00001 00010 00100 01000 11111', '3': '11110 00001 00001 01110 00001 00001 11110',
+    '4': '00010 00110 01010 10010 11111 00010 00010', '5': '11111 10000 11110 00001 00001 10001 01110',
+    '6': '00110 01000 10000 11110 10001 10001 01110', '7': '11111 00001 00010 00100 01000 01000 01000',
+    '8': '01110 10001 10001 01110 10001 10001 01110', '9': '01110 10001 10001 01111 00001 00010 01100',
+    'A': '01110 10001 10001 11111 10001 10001 10001', 'B': '11110 10001 10001 11110 10001 10001 11110',
+    'C': '01110 10001 10000 10000 10000 10001 01110', 'D': '11110 10001 10001 10001 10001 10001 11110',
+    'E': '11111 10000 10000 11110 10000 10000 11111', 'F': '11111 10000 10000 11110 10000 10000 10000',
+    'G': '01110 10001 10000 10111 10001 10001 01111', '#': '01010 01010 11111 01010 11111 01010 01010',
+    '¢': '00100 01110 10100 10100 10100 01110 00100',
+  };
+  const GLYPH_ROWS = {};
+  Object.keys(GLYPHS).forEach((ch) => { GLYPH_ROWS[ch] = GLYPHS[ch].split(' '); });
+
+  function drawPixelText(text, cx, top, color) {
+    const cell = Math.max(1, Math.round(dpr * 1.5)); // device pixels per font pixel
+    const advance = 6 * cell; // 5 columns + 1 gap
+    const textW = text.length * advance - cell;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // work in device pixels
+    ctx.fillStyle = color;
+    let x = Math.round(cx * dpr - textW / 2);
+    const y = Math.round(top * dpr);
+    for (const ch of text) {
+      const rows = GLYPH_ROWS[ch];
+      if (rows) {
+        for (let r = 0; r < 7; r++) {
+          for (let c = 0; c < 5; c++) {
+            if (rows[r][c] === '1') ctx.fillRect(x + c * cell, y + r * cell, cell, cell);
+          }
+        }
+      }
+      x += advance;
+    }
+    ctx.restore();
   }
 
   window.addEventListener('resize', resizeScopeCanvas);
@@ -157,10 +204,7 @@ export function initOscilloscope({ standalone = false } = {}) {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      ctx.font = '600 11px "Bricolage Grotesque", system-ui, sans-serif';
-      ctx.fillStyle = '#ff5a1f';
-      ctx.textAlign = 'center';
-      ctx.fillText('0¢', noteCenterX, height / 2 - 12);
+      drawPixelText('0\u00a2', noteCenterX, height / 2 - 22, '#ff5a1f');
 
       if (Math.abs(ribbon.targetCents) > 2) {
         ctx.strokeStyle = 'rgba(255, 199, 102, 0.6)';
@@ -182,15 +226,11 @@ export function initOscilloscope({ standalone = false } = {}) {
     }
 
     // Note names on top, number keys at the bottom
-    ctx.font = '600 12px "Bricolage Grotesque", system-ui, sans-serif';
-    ctx.textAlign = 'center';
     for (let i = 0; i < N; i++) {
       const centerX = (i + 0.5) * zoneWidth;
       const isActive = ribbon.playing && ribbon.activeIndex === i;
-      ctx.fillStyle = isActive ? '#ff5a1f' : 'rgba(236, 233, 227, 0.62)';
-      ctx.fillText(notes[i].noteName, centerX, 16);
-      ctx.fillStyle = isActive ? '#ece9e3' : 'rgba(236, 233, 227, 0.42)';
-      ctx.fillText(`${notes[i].shortcut}`, centerX, height - 7);
+      drawPixelText(notes[i].noteName, centerX, 6, isActive ? '#ff5a1f' : 'rgba(236, 233, 227, 0.62)');
+      drawPixelText(`${notes[i].shortcut}`, centerX, height - 16, isActive ? '#ece9e3' : 'rgba(236, 233, 227, 0.42)');
     }
   }
 
