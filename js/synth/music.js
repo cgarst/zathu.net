@@ -22,6 +22,14 @@ export const ROOT_KEYS = {
   'B': 59   // B3 (246.94 Hz)
 };
 
+export const OCTAVE_MIN = -1; // lowest root: E2 (82 Hz); lower notes are lost on small speakers
+export const OCTAVE_MAX = 2;
+
+// Root MIDI note for a key name at the current octave shift
+export function rootMidiFor(noteName) {
+  return (ROOT_KEYS[noteName] || 52) + 12 * state.octave;
+}
+
 // Musical Modes & Scales (Ordered: Natural Minor, Harmonic Minor, Minor Pent, Major, Modes)
 export const MODES = {
   'minor': {

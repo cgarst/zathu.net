@@ -2,7 +2,8 @@ export const state = {
   audioEnabled: true,
   currentWaveform: 'sine',
   rootNote: 'E',
-  rootMidi: 52, // E3 (164.81 Hz)
+  octave: 0,    // shift from the default octave, in octaves (OCTAVE_MIN to OCTAVE_MAX)
+  rootMidi: 52, // root note plus the octave shift (E3 is 164.81 Hz)
   currentMode: 'minor',
   arpMode: false,
   hold: false,

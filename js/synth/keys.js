@@ -1,5 +1,5 @@
 import { playClickBlip } from './audio.js';
-import { MODES, ROOT_KEYS, getNoteNameFromMidi } from './music.js';
+import { MODES, OCTAVE_MAX, OCTAVE_MIN, ROOT_KEYS, getNoteNameFromMidi, rootMidiFor } from './music.js';
 import { state } from './state.js';
 import { ARP_MIN_NOTES, activeKeyVoices, captureHeldVoices, getArpMaxNotes, refreshHeldKeyStates, refreshPlayingArps, releaseHeldVoices, releaseKey, stopAllNoteVoices, stopNoteVoice, triggerKey } from './voices.js';
 
@@ -209,12 +209,34 @@ export function initEModeSynth() {
       playClickBlip('high');
       const selectedKey = btn.getAttribute('data-root');
       state.rootNote = selectedKey;
-      state.rootMidi = ROOT_KEYS[selectedKey] || 52;
+      state.rootMidi = rootMidiFor(selectedKey);
       syncKeyButtons(selectedKey);
       btn.blur();
       renderNumberButtons();
     });
   });
+
+  // Octave - / +: shifts the whole keyboard and the wave pad up or down
+  const octDec = document.getElementById('octave-dec');
+  const octInc = document.getElementById('octave-inc');
+  const octVal = document.getElementById('octave-val');
+  function updateOctaveControls() {
+    if (octVal) octVal.textContent = Math.floor(state.rootMidi / 12) - 1;
+    if (octDec) octDec.disabled = state.octave <= OCTAVE_MIN;
+    if (octInc) octInc.disabled = state.octave >= OCTAVE_MAX;
+  }
+  function shiftOctave(delta) {
+    const next = Math.max(OCTAVE_MIN, Math.min(OCTAVE_MAX, state.octave + delta));
+    if (next === state.octave) return;
+    state.octave = next;
+    state.rootMidi = rootMidiFor(state.rootNote || 'E');
+    playClickBlip('high');
+    updateOctaveControls();
+    renderNumberButtons();
+  }
+  if (octDec) octDec.addEventListener('click', () => { shiftOctave(-1); octDec.blur(); });
+  if (octInc) octInc.addEventListener('click', () => { shiftOctave(1); octInc.blur(); });
+  updateOctaveControls();
 
   // Mode buttons: switch active mode
   modeBtns.forEach((btn) => {
@@ -279,7 +301,7 @@ export function initEModeSynth() {
     const formatted = keyArg.toUpperCase();
     if (ROOT_KEYS[formatted]) {
       state.rootNote = formatted;
-      state.rootMidi = ROOT_KEYS[formatted];
+      state.rootMidi = rootMidiFor(formatted);
       syncKeyButtons(formatted);
       renderNumberButtons();
     }
@@ -306,7 +328,7 @@ export function initEModeSynth() {
       const formatted = keyArg.toUpperCase();
       if (ROOT_KEYS[formatted]) {
         state.rootNote = formatted;
-        state.rootMidi = ROOT_KEYS[formatted];
+        state.rootMidi = rootMidiFor(formatted);
         syncKeyButtons(formatted);
       }
     }

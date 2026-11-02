@@ -128,6 +128,19 @@ export function initOscilloscope({ standalone = false } = {}) {
     ctx.lineTo(width, height / 2);
     ctx.stroke();
 
+    // Dashed guide down the middle of each column: straight on it is 0 cents, drag sideways for vibrato
+    ctx.strokeStyle = 'rgba(236, 233, 227, 0.22)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 6]);
+    for (let i = 0; i < N; i++) {
+      const cX = (i + 0.5) * zoneWidth;
+      ctx.beginPath();
+      ctx.moveTo(cX, 26);
+      ctx.lineTo(cX, height - 24);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
     // The note being played: its column lights up, with the vibrato marker
     if (ribbon.playing && ribbon.activeIndex >= 0 && ribbon.activeIndex < N) {
       const xLeft = ribbon.activeIndex * zoneWidth;
@@ -144,21 +157,28 @@ export function initOscilloscope({ standalone = false } = {}) {
       ctx.stroke();
       ctx.setLineDash([]);
 
+      ctx.font = '600 11px "Bricolage Grotesque", system-ui, sans-serif';
+      ctx.fillStyle = '#ff5a1f';
+      ctx.textAlign = 'center';
+      ctx.fillText('0¢', noteCenterX, height / 2 - 12);
+
       if (Math.abs(ribbon.targetCents) > 2) {
         ctx.strokeStyle = 'rgba(255, 199, 102, 0.6)';
         ctx.beginPath();
         ctx.moveTo(ribbon.currentX, 0);
         ctx.lineTo(ribbon.currentX, height);
         ctx.stroke();
-
-        const lfoFactor = ribbon.targetCents !== 0 ? (ribbon.currentCents / ribbon.targetCents) : 0;
-        const oscX = noteCenterX + (ribbon.currentX - noteCenterX) * lfoFactor;
-
-        ctx.fillStyle = '#ffc766';
-        ctx.beginPath();
-        ctx.arc(oscX, height / 2, 5, 0, Math.PI * 2);
-        ctx.fill();
       }
+
+      // Amber dot: its height follows the pointer (the filter). Across, it wiggles with the vibrato,
+      // swinging between the note's centre and the pointer, so it sits on the pointer at full depth.
+      const pointerY = height * (1 - (ribbon.cutoff - 300) / 5700);
+      const lfoFactor = ribbon.targetCents !== 0 ? (ribbon.currentCents / ribbon.targetCents) : 0;
+      const dotX = noteCenterX + (ribbon.currentX - noteCenterX) * lfoFactor;
+      ctx.fillStyle = '#ffc766';
+      ctx.beginPath();
+      ctx.arc(dotX, Math.max(7, Math.min(height - 7, pointerY)), 7, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     // Note names on top, number keys at the bottom
