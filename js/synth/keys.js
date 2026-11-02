@@ -1,7 +1,7 @@
-import { playClickBlip } from './audio.js';
+import { enableSound, playSynthNote, playClickBlip } from './audio.js';
 import { MODES, OCTAVE_MAX, OCTAVE_MIN, ROOT_KEYS, getNoteNameFromMidi, rootMidiFor } from './music.js';
 import { state } from './state.js';
-import { ARP_MIN_NOTES, activeKeyVoices, captureHeldVoices, getArpMaxNotes, refreshHeldKeyStates, refreshPlayingArps, releaseHeldVoices, releaseKey, stopAllNoteVoices, stopNoteVoice, triggerKey } from './voices.js';
+import { ARP_MIN_NOTES, activeKeyVoices, applyWaveformToPlaying, captureHeldVoices, getArpMaxNotes, refreshHeldKeyStates, refreshPlayingArps, releaseHeldVoices, releaseKey, stopAllNoteVoices, stopNoteVoice, triggerKey } from './voices.js';
 
 /* ==========================================================================
    CHROMATIC ROOT KEY & MODES / SCALES SYNTHESIZER
@@ -254,6 +254,46 @@ export function initEModeSynth() {
     });
   });
 
+  // Randomize: waveform, key, scale, octave and the arpeggiator settings. HOLD is left alone,
+  // since it freezes what is sounding right now rather than shaping the sound.
+  const randomBtn = document.getElementById('randomize-btn');
+  const waveBtns = document.querySelectorAll('.scope-btn[data-wave]');
+  const pick = (list) => list[Math.floor(Math.random() * list.length)];
+  function randomizeAll() {
+    const waves = [...waveBtns].map((b) => b.getAttribute('data-wave'));
+    const roots = [...keyBtns].map((b) => b.getAttribute('data-root'));
+
+    state.currentWaveform = pick(waves);
+    waveBtns.forEach((b) => b.classList.toggle('active', b.getAttribute('data-wave') === state.currentWaveform));
+    applyWaveformToPlaying(state.currentWaveform);
+
+    state.currentMode = pick(Object.keys(MODES));
+    modeBtns.forEach((b) => b.classList.toggle('active', b.getAttribute('data-mode') === state.currentMode));
+
+    state.rootNote = pick(roots);
+    state.octave = OCTAVE_MIN + Math.floor(Math.random() * (OCTAVE_MAX - OCTAVE_MIN + 1));
+    state.rootMidi = rootMidiFor(state.rootNote);
+    syncKeyButtons(state.rootNote);
+    updateOctaveControls();
+
+    stopAllNoteVoices(); // held sounds are separate and keep going
+    state.arpMode = Math.random() < 0.5;
+    state.arpEnd = pick(['linear', 'octave']);
+    state.arpNotes = ARP_MIN_NOTES + Math.floor(Math.random() * (getArpMaxNotes(MODES[state.currentMode], state.arpEnd) - ARP_MIN_NOTES + 1));
+    if (arpToggle) arpToggle.checked = state.arpMode;
+    if (arpLabelNotes) arpLabelNotes.classList.toggle('active', !state.arpMode);
+    if (arpLabelArp) arpLabelArp.classList.toggle('active', state.arpMode);
+
+    renderNumberButtons();
+    updateArpControls();
+    refreshPlayingArps();
+
+    // Play the new root so the change is heard
+    enableSound();
+    playSynthNote(440 * Math.pow(2, (state.rootMidi - 69) / 12), 0.5, state.currentWaveform);
+  }
+  if (randomBtn) randomBtn.addEventListener('click', () => { randomizeAll(); randomBtn.blur(); });
+
   // Ignore hotkeys only while typing in a text field (a focused checkbox/slider is fine)
   function isTypingTarget(el) {
     if (!el) return false;
@@ -266,6 +306,11 @@ export function initEModeSynth() {
   window.addEventListener('keydown', (e) => {
     if (isTypingTarget(document.activeElement)) return;
     if (e.repeat) return; // Ignore auto-repeat key events to hold steady sustain
+
+    if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      randomizeAll();
+      return;
+    }
 
     if (e.key === 'h' || e.key === 'H') {
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
