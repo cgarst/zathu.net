@@ -23,6 +23,7 @@ Deployed seamlessly under **GitHub Pages**.
 - **Cyber-Hardware Aesthetic**: Inspired by analog rack gear, synthesizers, and vintage terminal interfaces.
 - **Interactive Oscilloscope Canvas**: Real-time waveform visualizer (Sine, Sawtooth, Square, Pulse) reacting to cursor movement and audio clicks.
 - **Web Audio Modal Synthesizer**: Chromatic root key selector and scale modes (Natural Minor, Harmonic Minor, Pentatonic, Dorian, Phrygian, Lydian, Mixolydian, Major) with auto-vibrato and hotkeys `[1]` through `[8]`.
+- **Standalone Synth App (`/synth/`)**: The same Fidget Box 3000 synth, maximized with none of the site around it. It is an installable PWA (manifest + service worker) that works offline after the first visit.
 - **Vanilla Web Stack**: Pure HTML5, CSS3, and JavaScript for fast load times and zero build dependencies.
 
 ---
@@ -40,3 +41,12 @@ python3 -m http.server 8080
 2. Go to **Settings > Pages**.
 3. Under **Build and deployment > Source**, select **Deploy from a branch** -> `main` / `root`.
 4. Your site is live!
+
+---
+
+## 🗂 Code Layout
+
+- `index.html`, `css/style.css`, `js/site.js`: the site.
+- `js/synth/`: the synth as ES modules (`index.js` exports `mountSynth(target, { standalone })`; `audio`, `voices`, `ribbon`, `scope`, `keys`, `controls`, `music`, `state`, `ui`, `template`). `css/synth.css` styles it and `css/base.css` holds the shared tokens and reset.
+- `synth/`: the `/synth/` app page, `manifest.webmanifest`, and `sw.js`. The service worker lives here so its scope is `/synth/`. Icons are in `assets/synth/`.
+- ES modules need a web server (`python3 -m http.server`), not `file://`.

@@ -1,0 +1,18 @@
+{
+  "id": "/synth/",
+  "name": "Fidget Box 3000",
+  "short_name": "Fidget Box",
+  "description": "A playable scale synthesizer with an oscilloscope, by Zathu Software.",
+  "start_url": "/synth/",
+  "scope": "/synth/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07090e",
+  "theme_color": "#07090e",
+  "categories": ["music", "entertainment"],
+  "icons": [
+    { "src": "/assets/synth/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/synth/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/synth/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
