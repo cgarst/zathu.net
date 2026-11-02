@@ -127,6 +127,7 @@
   let masterAnalyser = null;
   let ribbonOsc = null;
   let ribbonGain = null;
+  let ribbonRel = null; // release stage after the note envelope, so letting go never cancels a mid-ramp
   let ribbonFilter = null;
   let isRibbonPlaying = false;
   let ribbonActiveIndex = -1;
@@ -669,7 +670,7 @@
 
     // A note being dragged on the scope is frozen at its current pitch
     if (isRibbonPlaying && ribbonOsc && ribbonGain) {
-      latchedRibbons.push({ osc: ribbonOsc, gain: ribbonGain, trace: ribbonTrace, pitches: [freqToMidi(ribbonBaseFreq)] });
+      latchedRibbons.push({ osc: ribbonOsc, gain: ribbonGain, rel: ribbonRel, trace: ribbonTrace, pitches: [freqToMidi(ribbonBaseFreq)] });
       ribbonTrace = null;
       isRibbonPlaying = false;
       ribbonActiveIndex = -1;
@@ -687,9 +688,10 @@
       try {
         const now = audioCtx.currentTime;
         releaseVoiceTrace(r.trace, 0.12);
-        r.gain.gain.cancelScheduledValues(now);
-        r.gain.gain.setValueAtTime(r.gain.gain.value, now);
-        r.gain.gain.linearRampToValueAtTime(0.0001, now + 0.09);
+        const g = (r.rel || r.gain).gain;
+        if (!r.rel) g.cancelScheduledValues(now);
+        g.setValueAtTime(r.rel ? 1 : g.value, now);
+        g.linearRampToValueAtTime(0.0001, now + 0.09);
         r.osc.stop(now + 0.11);
       } catch (e) {}
     }
@@ -814,7 +816,9 @@
 
       ribbonOsc.connect(ribbonFilter);
       ribbonFilter.connect(ribbonGain);
-      ribbonTrace = routeVoice(ribbonGain, null, ribbonOsc.type);
+      ribbonRel = audioCtx.createGain();
+      ribbonGain.connect(ribbonRel);
+      ribbonTrace = routeVoice(ribbonRel, null, ribbonOsc.type);
 
       ribbonOsc.start(now);
       isRibbonPlaying = true;
@@ -879,9 +883,11 @@
       const now = audioCtx.currentTime;
       releaseVoiceTrace(ribbonTrace, 0.12);
       ribbonTrace = null;
-      ribbonGain.gain.linearRampToValueAtTime(0.0001, now + 0.06);
+      const relGain = (ribbonRel || ribbonGain).gain;
+      relGain.setValueAtTime(ribbonRel ? 1 : relGain.value, now);
+      relGain.linearRampToValueAtTime(0.0001, now + 0.08);
       if (ribbonOsc) {
-        ribbonOsc.stop(now + 0.08);
+        ribbonOsc.stop(now + 0.1);
       }
     } catch (e) {}
     isRibbonPlaying = false;
