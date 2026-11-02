@@ -48,10 +48,10 @@ body.site ::selection { background: var(--hot); color: #000; }
 /* Header */
 .site-header { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--edge); }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 64px; }
-.brand { display: flex; align-items: center; gap: 10px; }
-.z-mark { width: 24px; height: 24px; background: var(--hot); clip-path: var(--z); transition: transform .4s var(--ease); }
+.brand { display: flex; align-items: baseline; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.04em; }
+.z-mark { width: .8em; height: .72em; margin-right: .04em; flex: none; background: var(--hot); clip-path: var(--z); transition: transform .4s var(--ease); }
 .brand:hover .z-mark { transform: rotate(-8deg) scale(1.12); }
-.brand-name { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.04em; }
+.brand-name { font-size: 1em; }
 .nav-links { list-style: none; display: flex; gap: 6px; }
 .nav-links a { display: block; padding: 8px 14px; border-radius: 8px; font-weight: 500; color: var(--muted); transition: background-color .2s, color .2s; }
 .nav-links a:hover { background: var(--panel-2); color: var(--ink); }
