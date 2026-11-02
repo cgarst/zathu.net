@@ -34,6 +34,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   padding: 10px 12px 12px;
 }
 .rack-header-left { display: flex; align-items: center; gap: 10px; }
@@ -64,8 +66,16 @@
 }
 .tune-menu-item:hover { background: var(--fb-key-hi); }
 .tune-menu-item:active { transform: translateY(3px); box-shadow: 0 0 0 var(--fb-shade); transition-duration: .04s; }
+/* Surprise: fills left to right like a progress bar while its song plays */
+#surprise-btn { position: relative; overflow: hidden; isolation: isolate; }
+#surprise-btn::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: var(--fb-hot-dark); transform: scaleX(0); transform-origin: left center;
+}
+#surprise-btn.playing::before { animation: surprise-fill var(--dur, 12s) linear forwards; }
+@keyframes surprise-fill { to { transform: scaleX(1); } }
 .rack-title { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; color: var(--fb-ink); }
-.rack-header-right { display: flex; align-items: center; gap: 8px; }
+.rack-header-right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 /* Shared key feel */
 .rack-btn, .scope-btn, .mode-btn, .hold-btn, .arp-opt-btn {

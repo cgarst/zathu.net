@@ -8,6 +8,7 @@ export const SYNTH_HTML = `
       <span class="rack-title">Fidget Box 3000</span>
     </div>
     <div class="rack-header-right">
+      <button type="button" class="rack-btn" id="surprise-btn" title="Play a short random song">Surprise</button>
       <button type="button" class="rack-btn" id="randomize-btn" aria-keyshortcuts="R" title="Randomize every setting (R)">Randomize</button>
       <button type="button" class="rack-btn rack-max-btn" id="scope-maximize-btn" aria-pressed="false" aria-label="Full screen">Full screen</button>
     </div>

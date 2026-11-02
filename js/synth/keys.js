@@ -308,8 +308,8 @@ export function initEModeSynth() {
   if (randomBtn) randomBtn.addEventListener('click', () => { randomizeByHand(); randomBtn.blur(); });
   randomizeAll(false); // always start from a random setup, silently
 
-  // Easter egg: tap the Z in the header and it plays a random "song" of about 12 seconds, then stops.
-  // Each tap starts a fresh one. A song randomizes everything once, picks a chord progression and a
+  // Surprise: the Surprise button plays a random "song" of about 12 seconds, then stops.
+  // Each press starts a fresh one (and tapping the Z seven times quickly opens a list of famous tunes). A song randomizes everything once, picks a chord progression and a
   // style (how the chords and bass are played), then plays six bars of 16 steps with layers:
   //  - chords: a triad (sometimes with a 7th) on the bar's scale degree, as a held pad, syncopated
   //    stabs, off-beats or a pulse
@@ -372,9 +372,13 @@ export function initEModeSynth() {
     };
 
     // Chord for this bar: a root degree, a triad on it, sometimes a 7th
-    const root = jamStyle.progression[bar] % S;
+    // The bar before the last is always the dominant (the 5th degree), so the song ends with a proper
+    // cadence: V (with its 7th) leading home to the tonic
+    const dominant = mode.intervals.includes(7) ? mode.intervals.indexOf(7) : Math.max(1, mode.intervals.indexOf(6));
+    const penultimate = bar === JAM_BARS - 2;
+    const root = penultimate ? dominant % S : jamStyle.progression[bar] % S;
     const chord = [root, root + 2, root + 4];
-    if (S >= 7 && chance(0.35)) chord.push(root + 6);
+    if (S >= 7 && (penultimate || chance(0.35))) chord.push(root + 6);
     const chordTones = new Set(chord.map((d) => ((d % S) + S) % S));
 
     // Chords (or a held arpeggio)
@@ -416,7 +420,9 @@ export function initEModeSynth() {
         const nextSt = i + 1 < rhythm.length ? rhythm[i + 1] : JAM_STEPS;
         const last = i === rhythm.length - 1;
         const dur = last && final ? 9 : Math.min(4, nextSt - st) * 0.9;
-        if (last) {
+        if (final) {
+          d = base + [2, 1, 0][Math.min(i, 2)]; // the last bar's lead steps down 3 - 2 - 1 and rings on the tonic
+        } else if (last) {
           d = base + root; // resolve to the chord root
         } else if (st % 4 === 0 && chance(0.7)) {
           // land on the chord tone nearest the current note
@@ -479,6 +485,18 @@ export function initEModeSynth() {
     jamClearNotes();
     jamPlaying = false;
     if (rackZ) rackZ.classList.remove('jamming');
+    surpriseProgress(0);
+  }
+
+  // The Surprise button fills like a progress bar over the length of the song (0 clears it)
+  function surpriseProgress(ms) {
+    const btn = document.getElementById('surprise-btn');
+    if (!btn) return;
+    btn.classList.remove('playing');
+    if (!ms) return;
+    btn.style.setProperty('--dur', ms + 'ms');
+    void btn.offsetWidth; // restart the animation when a new song replaces one that was playing
+    btn.classList.add('playing');
   }
 
   // One time in ten, the song is a famous tune instead, taken in turn from TUNES (starting at a random
@@ -525,7 +543,22 @@ export function initEModeSynth() {
     layer(tune.chords, 0);
     layer(tune.bass, 0);
     const end = Math.max(...tune.melody.map(([b, l]) => b + l));
-    jamBarTimers.push(setTimeout(endSong, end * beatMs + 400));
+
+    // Whatever the transcription ends on, close with a ringing tonic chord and a low root
+    const mode = MODES[tune.mode];
+    const rootMidi = state.rootMidi;
+    const closeMs = end * beatMs + 60;
+    [[mode.intervals[0], 0], [mode.intervals[2], 0], [mode.intervals[4], 0], [mode.intervals[0], -12], [mode.intervals[0], 12]].forEach(([iv, shift]) => {
+      const id = 'jam-' + jamSeq++;
+      const midi = rootMidi + iv + shift;
+      jamTimeouts.push(setTimeout(() => {
+        startNoteVoice(id, 440 * Math.pow(2, (midi - 69) / 12), null);
+        jamVoiceIds.push(id);
+        jamTimeouts.push(setTimeout(() => stopNoteVoice(id), 1700));
+      }, closeMs));
+    });
+    jamBarTimers.push(setTimeout(endSong, closeMs + 1700 + 300));
+    surpriseProgress(closeMs + 1700 + 300);
   }
 
   function startSong() {
@@ -556,6 +589,7 @@ export function initEModeSynth() {
     }
     // Let the last chord ring, then stop
     jamBarTimers.push(setTimeout(endSong, JAM_BARS * JAM_BAR_MS + 300));
+    surpriseProgress(JAM_BARS * JAM_BAR_MS + 300);
   }
   const rackZHit = document.querySelector('.rack-z-hit') || rackZ;
   // Tap the Z seven times in quick succession to open a list of the tunes and pick one
@@ -599,6 +633,15 @@ export function initEModeSynth() {
         return;
       }
       zTapTimer = setTimeout(() => { zTaps = 0; }, 700); // each tap must follow the last within 0.7 s
+    });
+  }
+
+  // The Surprise button plays a random song (now and then a famous tune)
+  const surpriseBtn = document.getElementById('surprise-btn');
+  if (surpriseBtn) {
+    surpriseBtn.addEventListener('click', () => {
+      surpriseBtn.blur();
+      if (!tuneMenu.hidden) return; // the tune list stays up until a tune is picked
       startSong();
     });
   }
