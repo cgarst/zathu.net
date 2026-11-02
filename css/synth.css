@@ -39,8 +39,12 @@
 .rack-header-left { display: flex; align-items: center; gap: 10px; }
 .rack-z {
   width: 18px; height: 18px; background: var(--fb-hot);
+  cursor: pointer;
   clip-path: polygon(0 0, 100% 0, 100% 26%, 38% 74%, 100% 74%, 100% 100%, 0 100%, 0 74%, 62% 26%, 0 26%);
 }
+@keyframes rack-z-jam { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3) rotate(8deg); } }
+.rack-z.jamming { animation: rack-z-jam 0.75s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .rack-z.jamming { animation: none; } }
 .rack-title { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; color: var(--fb-ink); }
 .rack-header-right { display: flex; align-items: center; gap: 8px; }
 

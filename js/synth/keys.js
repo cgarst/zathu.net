@@ -1,7 +1,8 @@
 import { enableSound, playSynthNote, playClickBlip } from './audio.js';
 import { MODES, OCTAVE_MAX, OCTAVE_MIN, ROOT_KEYS, getNoteNameFromMidi, rootMidiFor } from './music.js';
+import { ribbon, startRibbonTone, stopRibbonTone, updateRibbonTone } from './ribbon.js';
 import { state } from './state.js';
-import { ARP_MIN_NOTES, activeKeyVoices, applyWaveformToPlaying, captureHeldVoices, getArpMaxNotes, refreshHeldKeyStates, refreshPlayingArps, releaseHeldVoices, releaseKey, stopAllNoteVoices, stopNoteVoice, triggerKey } from './voices.js';
+import { ARP_MIN_NOTES, activeKeyVoices, startNoteVoice, applyWaveformToPlaying, captureHeldVoices, getArpMaxNotes, refreshHeldKeyStates, refreshPlayingArps, releaseHeldVoices, releaseKey, stopAllNoteVoices, stopNoteVoice, triggerKey } from './voices.js';
 
 /* ==========================================================================
    CHROMATIC ROOT KEY & MODES / SCALES SYNTHESIZER
@@ -234,6 +235,13 @@ export function initEModeSynth() {
     updateOctaveControls();
     renderNumberButtons();
   }
+  function setOctave(n) {
+    if (n === state.octave) return;
+    state.octave = n;
+    state.rootMidi = rootMidiFor(state.rootNote || 'E');
+    updateOctaveControls();
+    renderNumberButtons();
+  }
   if (octDec) octDec.addEventListener('click', () => { shiftOctave(-1); octDec.blur(); });
   if (octInc) octInc.addEventListener('click', () => { shiftOctave(1); octInc.blur(); });
   updateOctaveControls();
@@ -296,6 +304,209 @@ export function initEModeSynth() {
   }
   if (randomBtn) randomBtn.addEventListener('click', () => { randomizeAll(); randomBtn.blur(); });
   randomizeAll(false); // always start from a random setup, silently
+
+  // Easter egg: tap the Z in the header and it plays a random "song" of about 10 seconds, then stops.
+  // Each tap starts a fresh one. A song randomizes everything once, picks a chord progression and a
+  // style (how the chords and bass are played), then plays four bars of 16 steps with layers:
+  //  - chords: a triad (sometimes with a 7th) on the bar's scale degree, as a held pad, syncopated
+  //    stabs, off-beats or a pulse
+  //  - bass: that chord's root an octave down
+  //  - lead: a melody, on the keys an octave (sometimes two) up or on the touchable wave, that lands
+  //    on chord tones on the strong steps, walks by step in between, and resolves to the chord root
+  // With the arpeggiator on, a held arpeggio replaces the chords and the lead thins out.
+  // The last bar settles on the home chord and lets it ring out.
+  const rackZ = document.querySelector('.rack-z');
+  const JAM_BAR_MS = 2500;
+  const JAM_BARS = 4;
+  const JAM_STEPS = 16;
+  let jamBarTimers = [];
+  let jamPlaying = false;
+  let jamStyle = null;
+  let jamTimeouts = [];
+  let jamVoiceIds = [];
+  let jamArpIds = [];
+  let jamSeq = 0;
+  let jamRibbonOn = false;
+  const scopeCanvas = document.getElementById('oscilloscope-canvas');
+  const rand = (min, max) => min + Math.random() * (max - min);
+  const chance = (p) => Math.random() < p;
+
+  function jamClearNotes() {
+    jamTimeouts.forEach(clearTimeout);
+    jamTimeouts = [];
+    jamVoiceIds.forEach(stopNoteVoice);
+    jamVoiceIds = [];
+    jamArpIds.forEach((id) => releaseKey(id, 'jam'));
+    jamArpIds = [];
+    if (jamRibbonOn) { stopRibbonTone(); jamRibbonOn = false; }
+  }
+
+  function jamPhrase(bar) {
+    const keys = [...container.querySelectorAll('.synth-key')];
+    if (!keys.length) return;
+    const mode = MODES[state.currentMode] || MODES.minor;
+    const S = mode.intervals.length - 1; // scale steps per octave
+    const stepMs = JAM_BAR_MS / JAM_STEPS;
+    const final = bar === JAM_BARS - 1;
+    jamArpIds.forEach((id) => releaseKey(id, 'jam')); // last bar's arpeggio ends as the new bar starts
+    jamArpIds = [];
+    const arp = state.arpMode;
+
+    // Scale degree (any integer, negative = below the root) -> frequency, with an octave shift
+    const degFreq = (d, oct = 0) => {
+      const midi = state.rootMidi + mode.intervals[((d % S) + S) % S] + 12 * (Math.floor(d / S) + oct);
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    };
+    const at = (step, fn) => jamTimeouts.push(setTimeout(fn, step * stepMs + rand(-8, 8) * (step ? 1 : 0)));
+    const play = (step, steps, d, oct = 0) => {
+      const id = 'jam-' + jamSeq++;
+      const el = oct === 0 && d >= 0 && d < keys.length ? keys[d] : null; // light the key when it is on the pad
+      at(step, () => {
+        startNoteVoice(id, degFreq(d, oct), el);
+        jamVoiceIds.push(id);
+        jamTimeouts.push(setTimeout(() => stopNoteVoice(id), Math.max(60, steps * stepMs)));
+      });
+    };
+
+    // Chord for this bar: a root degree, a triad on it, sometimes a 7th
+    const root = jamStyle.progression[bar] % S;
+    const chord = [root, root + 2, root + 4];
+    if (S >= 7 && chance(0.35)) chord.push(root + 6);
+    const chordTones = new Set(chord.map((d) => ((d % S) + S) % S));
+
+    // Chords (or a held arpeggio)
+    if (arp) {
+      const id = String(root + 1);
+      at(0, () => { triggerKey(id, keys[Math.min(root, keys.length - 1)], 'jam'); jamArpIds.push(id); });
+    } else {
+      const comp = final ? 'pad' : jamStyle.comp;
+      const hits = {
+        pad: [[0, final ? 11 : 15]],
+        stabs: [[0, 4], [6, 3], [10, 5]],
+        offbeat: [[0, 3], [4, 3], [8, 3], [12, 3]].map(([st, n], i) => [st + (i % 2 ? 2 : 0), n]),
+        pulse: Array.from({ length: 8 }, (_, i) => [i * 2, 1.6]),
+      }[comp];
+      hits.forEach(([st, n]) => chord.forEach((d, i) => {
+        // spread the voicing: sometimes lift the top note an octave
+        play(st, n, d, i === chord.length - 1 && chance(0.4) ? 1 : 0);
+      }));
+    }
+
+    // Bass: the chord root an octave down (and sometimes its fifth)
+    const bassHits = final ? [[0, 12]] : jamStyle.bass;
+    bassHits.forEach(([st, n], i) => play(st, n, i && chance(0.3) ? root + 4 : root, -1));
+
+    // Lead: rhythm picked from a few shapes, the melody walks and lands on chord tones on strong steps.
+    // It is played either on the keys (an octave or two up) or on the touchable wave, where it glides
+    // between notes, wobbles with vibrato and sweeps the filter like a finger dragging across the pad.
+    if (final || chance(0.85)) {
+      const rhythm = final ? [0, 4, 8] : pick(arp
+        ? [[0, 8], [2, 10], [0, 6, 12]]
+        : [[0, 3, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14], [0, 4, 7, 8, 12, 14], [2, 6, 10, 13], [0, 6, 8, 12]]);
+      const onWave = scopeCanvas && (chance(0.25) ? !jamStyle.wave : jamStyle.wave);
+      const octave = chance(0.25) ? 2 : 1;
+      const base = onWave ? 0 : S; // the wave spans one octave from the root; the keys lead sits an octave up
+      const lo = onWave ? 0 : S - 2;
+      let d = base + (chordTones.has(0) ? 0 : root + 2);
+      let jamTouch = { x: (S / 2 + 0.5) * (scopeCanvas ? scopeCanvas.width / (S + 1) : 0), y: rand(0.2, 0.8), down: false }; // the virtual finger
+      rhythm.forEach((st, i) => {
+        const nextSt = i + 1 < rhythm.length ? rhythm[i + 1] : JAM_STEPS;
+        const last = i === rhythm.length - 1;
+        const dur = last && final ? 9 : Math.min(4, nextSt - st) * 0.9;
+        if (last) {
+          d = base + root; // resolve to the chord root
+        } else if (st % 4 === 0 && chance(0.7)) {
+          // land on the chord tone nearest the current note
+          let best = d;
+          for (let c = d - 3; c <= d + 3; c++) {
+            if (chordTones.has(((c % S) + S) % S) && (best === d && !chordTones.has(((d % S) + S) % S) || Math.abs(c - d) < Math.abs(best - d))) best = c;
+          }
+          d = best;
+        } else {
+          d += (chance(0.5) ? -1 : 1) * (chance(0.75) ? 1 : 2);
+        }
+        d = Math.max(lo, Math.min(base + S, d));
+
+        if (!onWave) {
+          play(st, dur, d, octave - 1);
+          return;
+        }
+        // Touchable wave, played as a dragging finger rather than separate notes: x picks the note
+        // (sliding across the pad glides through the scale, offset from a note's centre = vibrato
+        // depth) and y sweeps the filter. Notes that follow on slide in from the previous one, and
+        // some are long swoops across several notes.
+        const w = scopeCanvas.width;
+        const h = scopeCanvas.height;
+        const zone = w / (S + 1);
+        const fromX = jamTouch.x;
+        const fromY = jamTouch.y;
+        const swoop = !last && dur >= 2 && chance(0.3);
+        if (swoop) d = Math.max(lo, Math.min(base + S, d + (chance(0.5) ? -1 : 1) * Math.floor(rand(3, 6))));
+        const toX = (d + 0.5) * zone;
+        const toY = Math.max(0.05, Math.min(0.95, fromY + rand(-0.35, 0.35)));
+        const legato = jamTouch.down;
+        const slide = swoop ? 0.9 : legato ? 0.45 : 0; // share of the note spent travelling
+        const vib = chance(0.6) ? rand(0.15, 0.45) * (chance(0.5) ? -1 : 1) * zone : 0;
+        const wobble = rand(0.04, 0.12);
+        const lift = last || nextSt - st > 2;
+        const ease = (t) => t * t * (3 - 2 * t);
+        const frames = Math.max(2, Math.round((dur * stepMs) / 30));
+        for (let k = 0; k <= frames; k++) {
+          const f = k / frames;
+          const sf = slide ? ease(Math.min(1, f / slide)) : 1;
+          const startX = slide ? fromX : toX;
+          const x = startX + (toX - startX) * sf + vib * f;
+          const y = (fromY + (toY - fromY) * f + Math.sin(f * Math.PI * 2) * wobble) * h;
+          jamTimeouts.push(setTimeout(() => {
+            if (k === 0 && !(ribbon.playing && jamRibbonOn)) { startRibbonTone(x, y, w, h); jamRibbonOn = true; }
+            else if (jamRibbonOn) updateRibbonTone(x, y, w, h);
+          }, (st + dur * f) * stepMs));
+        }
+        jamTouch = { x: toX + vib, y: toY, down: !lift };
+        if (lift) {
+          jamTimeouts.push(setTimeout(() => { if (jamRibbonOn) { stopRibbonTone(); jamRibbonOn = false; } }, (st + dur) * stepMs + 5));
+        }
+      });
+    }
+  }
+
+  function endSong() {
+    jamBarTimers.forEach(clearTimeout);
+    jamBarTimers = [];
+    jamClearNotes();
+    jamPlaying = false;
+    if (rackZ) rackZ.classList.remove('jamming');
+  }
+
+  function startSong() {
+    endSong();
+    enableSound();
+    randomizeAll(false);
+    // Progressions in scale degrees (0 = home); the last bar always returns home
+    const progressions = [[0, 3, 4, 0], [0, 5, 3, 0], [0, 4, 5, 0], [0, 3, 0, 0], [0, 2, 3, 0]];
+    jamStyle = {
+      progression: pick(progressions),
+      comp: pick(['pad', 'stabs', 'offbeat', 'pulse']),
+      bass: pick([[[0, 15]], [[0, 7], [8, 7]], [[0, 5], [6, 3], [8, 5], [14, 2]], [[0, 3], [4, 3], [8, 3], [12, 3]]]),
+      wave: chance(0.55),
+    };
+    // The whole song can move up or down an octave partway through (keys, wave and display follow),
+    // and always comes back to where it started for the last bar
+    const home = state.octave;
+    const nearby = (delta) => Math.max(OCTAVE_MIN, Math.min(OCTAVE_MAX, home + delta));
+    jamStyle.octaves = [home, nearby(pick([0, 0, 1, -1])), nearby(pick([0, 1, -1, 1])), home];
+    jamPlaying = true;
+    if (rackZ) rackZ.classList.add('jamming');
+    for (let bar = 0; bar < JAM_BARS; bar++) {
+      jamBarTimers.push(setTimeout(() => {
+        if (bar > 0) setOctave(jamStyle.octaves[bar]);
+        jamPhrase(bar);
+      }, bar * JAM_BAR_MS));
+    }
+    // Let the last chord ring, then stop
+    jamBarTimers.push(setTimeout(endSong, JAM_BARS * JAM_BAR_MS + 300));
+  }
+  if (rackZ) rackZ.addEventListener('click', startSong);
 
   // Ignore hotkeys only while typing in a text field (a focused checkbox/slider is fine)
   function isTypingTarget(el) {
