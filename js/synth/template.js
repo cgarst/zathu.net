@@ -70,9 +70,9 @@ export const SYNTH_HTML = `
       <button type="button" class="hold-btn" id="hold-btn" aria-pressed="false" aria-keyshortcuts="H" title="Freeze the sounds playing right now until HOLD is switched off (H)">Hold <span class="hold-key-hint">H</span></button>
       <div class="octave-group" role="group" aria-label="Octave">
         <span class="arp-opt-label">Octave</span>
-        <button type="button" class="arp-opt-btn arp-step-btn" id="octave-dec" aria-label="Octave down">&minus;</button>
+        <button type="button" class="arp-opt-btn arp-step-btn" id="octave-dec" aria-label="Octave down" aria-keyshortcuts="-" title="Octave down (-)">&minus;</button>
         <span class="arp-notes-val" id="octave-val" aria-live="polite">3</span>
-        <button type="button" class="arp-opt-btn arp-step-btn" id="octave-inc" aria-label="Octave up">+</button>
+        <button type="button" class="arp-opt-btn arp-step-btn" id="octave-inc" aria-label="Octave up" aria-keyshortcuts="+" title="Octave up (+)">+</button>
       </div>
     </div>
 

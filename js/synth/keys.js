@@ -259,7 +259,7 @@ export function initEModeSynth() {
   const randomBtn = document.getElementById('randomize-btn');
   const waveBtns = document.querySelectorAll('.scope-btn[data-wave]');
   const pick = (list) => list[Math.floor(Math.random() * list.length)];
-  function randomizeAll() {
+  function randomizeAll(audible = true) {
     const waves = [...waveBtns].map((b) => b.getAttribute('data-wave'));
     const roots = [...keyBtns].map((b) => b.getAttribute('data-root'));
 
@@ -288,11 +288,14 @@ export function initEModeSynth() {
     updateArpControls();
     refreshPlayingArps();
 
-    // Play the new root so the change is heard
-    enableSound();
-    playSynthNote(440 * Math.pow(2, (state.rootMidi - 69) / 12), 0.5, state.currentWaveform);
+    // Play the new root so the change is heard (not on the silent start-up randomize)
+    if (audible) {
+      enableSound();
+      playSynthNote(440 * Math.pow(2, (state.rootMidi - 69) / 12), 0.5, state.currentWaveform);
+    }
   }
   if (randomBtn) randomBtn.addEventListener('click', () => { randomizeAll(); randomBtn.blur(); });
+  randomizeAll(false); // always start from a random setup, silently
 
   // Ignore hotkeys only while typing in a text field (a focused checkbox/slider is fine)
   function isTypingTarget(el) {
@@ -309,6 +312,15 @@ export function initEModeSynth() {
 
     if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey && !e.metaKey && !e.altKey) {
       randomizeAll();
+      return;
+    }
+
+    if ((e.key === '-' || e.key === '_') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      shiftOctave(-1);
+      return;
+    }
+    if ((e.key === '+' || e.key === '=') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      shiftOctave(1);
       return;
     }
 
