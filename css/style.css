@@ -49,7 +49,7 @@ body.site ::selection { background: var(--hot); color: #000; }
 .site-header { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--edge); }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 64px; }
 .brand { display: flex; align-items: baseline; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.04em; }
-.z-mark { width: .8em; height: .72em; margin-right: .04em; flex: none; background: var(--hot); clip-path: var(--z); transition: transform .4s var(--ease); }
+.z-mark { width: .66em; height: .7em; margin-right: .03em; flex: none; background: var(--hot); clip-path: polygon(0 0, 100% 0, 100% 21%, 30% 79%, 100% 79%, 100% 100%, 0 100%, 0 79%, 70% 21%, 0 21%); transition: transform .4s var(--ease); }
 .brand:hover .z-mark { transform: rotate(-8deg) scale(1.12); }
 .brand-name { font-size: 1em; }
 .nav-links { list-style: none; display: flex; gap: 6px; }
