@@ -62,9 +62,6 @@ body.site ::selection { background: var(--hot); color: #000; }
 .hero-title { font-size: clamp(2.3rem, 1rem + 3.9vw, 4.6rem); line-height: .98; letter-spacing: -0.045em; }
 .hero-subtitle { margin-top: 24px; font-size: 1.3rem; line-height: 1.4; max-width: 34ch; color: var(--ink); }
 .hero-action-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 32px; }
-.facts { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; }
-.facts li { padding: 6px 12px 6px 28px; background: var(--panel); border-radius: 999px; font-size: .95rem; position: relative; color: var(--ink); }
-.facts li::before { content: ''; position: absolute; left: 12px; top: 50%; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: #5dff8a; box-shadow: 0 0 8px #5dff8a; }
 .hero-stage { min-width: 0; }
 .hero-hardware-panel { min-width: 0; }
 .hero-note { margin-top: 18px; color: var(--muted); font-size: 1rem; max-width: 52ch; }
