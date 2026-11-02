@@ -104,10 +104,12 @@ export function initOscilloscope({ standalone = false } = {}) {
     updateRibbonTone(x, y, width, height);
   }, { passive: false });
 
-  canvas.addEventListener('touchend', () => {
+  const endTouch = () => {
     isMouseDownOnCanvas = false;
     stopRibbonTone();
-  });
+  };
+  canvas.addEventListener('touchend', endTouch);
+  canvas.addEventListener('touchcancel', endTouch);
 
   function drawGrid() {
     const notes = getActiveScaleNotes();

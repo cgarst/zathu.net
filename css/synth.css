@@ -97,6 +97,7 @@
   width: 100%;
   height: 180px;
   display: block;
+  touch-action: none; /* the wave is a pad: stop the browser claiming vertical swipes as scroll */
   background: #020509;
 }
 
