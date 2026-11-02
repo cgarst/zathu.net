@@ -62,15 +62,15 @@ export const SYNTH_HTML = `
 
     <!-- Keys behavior slider: single notes vs. 6-note arpeggio -->
     <div class="arp-switcher" role="group" aria-label="Key behavior">
-      <span id="arp-label-notes" class="arp-label active">Notes</span>
-      <label class="arp-switch" title="Slide to switch keys between single notes and a 6-note arpeggio">
+      <span id="arp-label-notes" class="arp-label active">Notes <span class="hold-key-hint" aria-hidden="true">N</span></span>
+      <label class="arp-switch" aria-keyshortcuts="N A" title="Slide to switch keys between single notes (N) and an arpeggio (A)">
         <input type="checkbox" id="arp-toggle" aria-label="Arpeggiator mode">
         <span class="arp-slider"></span>
       </label>
-      <span id="arp-label-arp" class="arp-label">Arpeggiator</span>
+      <span id="arp-label-arp" class="arp-label">Arpeggiator <span class="hold-key-hint" aria-hidden="true">A</span></span>
       <button type="button" class="hold-btn" id="hold-btn" aria-pressed="false" aria-keyshortcuts="H" title="Freeze the sounds playing right now until HOLD is switched off (H)">Hold <span class="hold-key-hint">H</span></button>
       <div class="octave-group" role="group" aria-label="Octave">
-        <span class="arp-opt-label">Octave</span>
+        <span class="arp-opt-label">Octave <span class="hold-key-hint" aria-hidden="true">&minus; / +</span></span>
         <button type="button" class="arp-opt-btn arp-step-btn" id="octave-dec" aria-label="Octave down" aria-keyshortcuts="-" title="Octave down (-)">&minus;</button>
         <span class="arp-notes-val" id="octave-val" aria-live="polite">3</span>
         <button type="button" class="arp-opt-btn arp-step-btn" id="octave-inc" aria-label="Octave up" aria-keyshortcuts="+" title="Octave up (+)">+</button>

@@ -664,6 +664,16 @@ export function initEModeSynth() {
       return;
     }
 
+    // N = single notes, A = arpeggiator (each key sets its mode; pressing it again changes nothing)
+    const modeKey = { n: false, a: true }[e.key.toLowerCase()];
+    if (modeKey !== undefined && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (arpToggle && arpToggle.checked !== modeKey) {
+        arpToggle.checked = modeKey;
+        arpToggle.dispatchEvent(new Event('change')); // runs the same handler as clicking the switch
+      }
+      return;
+    }
+
     if ((e.key === '-' || e.key === '_') && !e.ctrlKey && !e.metaKey && !e.altKey) {
       shiftOctave(-1);
       return;
