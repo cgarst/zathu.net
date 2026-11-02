@@ -26,7 +26,7 @@ export function initEModeSynth() {
     if (!container) return;
     // Single notes belong to the old scale and stop; arpeggios being played carry on and re-scale below
     Object.keys(activeKeyVoices).forEach((id) => {
-      if (!activeKeyVoices[id].isArp) stopNoteVoice(id);
+      if (!id.startsWith('jam-') && !activeKeyVoices[id].isArp) stopNoteVoice(id);
     });
     container.innerHTML = '';
 
@@ -309,7 +309,7 @@ export function initEModeSynth() {
   randomizeAll(false); // always start from a random setup, silently
 
   // Surprise: the Surprise button plays a random "song" of about 12 seconds, then stops.
-  // Each press starts a fresh one (and tapping the Z seven times quickly opens a list of famous tunes). A song randomizes everything once, picks a chord progression and a
+  // Each press starts a fresh one (and tapping the Z five times quickly opens a list of famous tunes). A song randomizes everything once, picks a chord progression and a
   // style (how the chords and bass are played), then plays six bars of 16 steps with layers:
   //  - chords: a triad (sometimes with a 7th) on the bar's scale degree, as a held pad, syncopated
   //    stabs, off-beats or a pulse
@@ -344,9 +344,8 @@ export function initEModeSynth() {
     if (jamRibbonOn) { stopRibbonTone(); jamRibbonOn = false; }
   }
 
-  function jamPhrase(bar) {
-    const keys = [...container.querySelectorAll('.synth-key')];
-    if (!keys.length) return;
+  function jamPhrase(bar, home = state.octave) {
+    if (!container) return;
     const mode = MODES[state.currentMode] || MODES.minor;
     const S = mode.intervals.length - 1; // scale steps per octave
     const stepMs = JAM_BAR_MS / JAM_STEPS;
@@ -355,17 +354,31 @@ export function initEModeSynth() {
     jamArpIds = [];
     const arp = state.arpMode;
 
-    // Scale degree (any integer, negative = below the root) -> frequency, with an octave shift
-    const degFreq = (d, oct = 0) => {
-      const midi = state.rootMidi + mode.intervals[((d % S) + S) % S] + 12 * (Math.floor(d / S) + oct);
-      return 440 * Math.pow(2, (midi - 69) / 12);
+    const onWave = scopeCanvas && (chance(0.25) ? !jamStyle.wave : jamStyle.wave);
+    const barOctave = final ? home : jamStyle.octaves[bar];
+
+    // Determine target octave for the display:
+    // When the lead is on keys, display the active melody octave so on-screen keys light up.
+    // When on oscilloscope or arpeggiating, display the chord/arp octave.
+    let displayOctave = barOctave;
+    if (!final && !arp && !onWave) {
+      displayOctave = Math.min(OCTAVE_MAX, barOctave + 1);
+    }
+    setOctave(displayOctave);
+
+    const baseMidi = state.rootMidi;
+    const degMidi = (d, octShift = 0) => {
+      return baseMidi + mode.intervals[((d % S) + S) % S] + 12 * (Math.floor(d / S) + octShift);
     };
+
     const at = (step, fn) => jamTimeouts.push(setTimeout(fn, step * stepMs + rand(-8, 8) * (step ? 1 : 0)));
-    const play = (step, steps, d, oct = 0) => {
+    const play = (step, steps, d, octShift = 0) => {
       const id = 'jam-' + jamSeq++;
-      const el = oct === 0 && d >= 0 && d < keys.length ? keys[d] : null; // light the key when it is on the pad
+      const midi = degMidi(d, octShift);
+      const freq = 440 * Math.pow(2, (midi - 69) / 12);
       at(step, () => {
-        startNoteVoice(id, degFreq(d, oct), el);
+        const el = container ? container.querySelector(`.synth-key[data-midi="${midi}"]`) : null;
+        startNoteVoice(id, freq, el);
         jamVoiceIds.push(id);
         jamTimeouts.push(setTimeout(() => stopNoteVoice(id), Math.max(60, steps * stepMs)));
       });
@@ -374,6 +387,7 @@ export function initEModeSynth() {
     // Chord for this bar: a root degree, a triad on it, sometimes a 7th
     // The bar before the last is always the dominant (the 5th degree), so the song ends with a proper
     // cadence: V (with its 7th) leading home to the tonic
+    const chordOct = barOctave - displayOctave;
     const dominant = mode.intervals.includes(7) ? mode.intervals.indexOf(7) : Math.max(1, mode.intervals.indexOf(6));
     const penultimate = bar === JAM_BARS - 2;
     const root = penultimate ? dominant % S : jamStyle.progression[bar] % S;
@@ -384,6 +398,7 @@ export function initEModeSynth() {
     // Chords (or a held arpeggio)
     if (arp) {
       const id = String(root + 1);
+      const keys = [...container.querySelectorAll('.synth-key')];
       at(0, () => { triggerKey(id, keys[Math.min(root, keys.length - 1)], 'jam'); jamArpIds.push(id); });
     } else {
       const comp = final ? 'pad' : jamStyle.comp;
@@ -395,25 +410,24 @@ export function initEModeSynth() {
       }[comp];
       hits.forEach(([st, n]) => chord.forEach((d, i) => {
         // spread the voicing: sometimes lift the top note an octave
-        play(st, n, d, i === chord.length - 1 && chance(0.4) ? 1 : 0);
+        play(st, n, d, chordOct + (i === chord.length - 1 && chance(0.4) ? 1 : 0));
       }));
     }
 
     // Bass: the chord root an octave down (and sometimes its fifth)
+    const bassOct = chordOct - 1;
     const bassHits = final ? [[0, 12]] : jamStyle.bass;
-    bassHits.forEach(([st, n], i) => play(st, n, i && chance(0.3) ? root + 4 : root, -1));
+    bassHits.forEach(([st, n], i) => play(st, n, i && chance(0.3) ? root + 4 : root, bassOct));
 
     // Lead: rhythm picked from a few shapes, the melody walks and lands on chord tones on strong steps.
-    // It is played either on the keys (an octave or two up) or on the touchable wave, where it glides
+    // It is played either on the keys or on the touchable wave, where it glides
     // between notes, wobbles with vibrato and sweeps the filter like a finger dragging across the pad.
     if (final || chance(0.85)) {
       const rhythm = final ? [0, 4, 8] : pick(arp
         ? [[0, 8], [2, 10], [0, 6, 12]]
         : [[0, 3, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14], [0, 4, 7, 8, 12, 14], [2, 6, 10, 13], [0, 6, 8, 12]]);
-      const onWave = scopeCanvas && (chance(0.25) ? !jamStyle.wave : jamStyle.wave);
-      const octave = chance(0.25) ? 2 : 1;
-      const base = onWave ? 0 : S; // the wave spans one octave from the root; the keys lead sits an octave up
-      const lo = onWave ? 0 : S - 2;
+      const base = 0;
+      const lo = 0;
       let d = base + (chordTones.has(0) ? 0 : root + 2);
       let jamTouch = { x: (S / 2 + 0.5) * (scopeCanvas ? scopeCanvas.clientWidth / (S + 1) : 0), y: rand(0.2, 0.8), down: false }; // the virtual finger
       rhythm.forEach((st, i) => {
@@ -437,7 +451,7 @@ export function initEModeSynth() {
         d = Math.max(lo, Math.min(base + S, d));
 
         if (!onWave) {
-          play(st, dur, d, octave - 1);
+          play(st, dur, d, 0);
           return;
         }
         // Touchable wave, played as a dragging finger rather than separate notes: x picks the note
@@ -499,6 +513,68 @@ export function initEModeSynth() {
     btn.classList.add('playing');
   }
 
+  // Compute intelligent phrase octave shifts for famous tunes so the displayed octave
+  // and on-screen keys track the active register of the melody without rapid flickering.
+  function computeOctaveSchedule(tune) {
+    const rootBase = ROOT_KEYS[tune.root] || 52;
+    const beatMs = 60000 / tune.bpm;
+    const melody = tune.melody;
+    if (!melody || !melody.length) return [];
+
+    const isNoteInOct = (midi, oct) => {
+      const lo = rootBase + 12 * oct;
+      return midi >= lo && midi <= lo + 12;
+    };
+
+    const getBestOct = (midi, prefOct) => {
+      if (isNoteInOct(midi, prefOct)) return prefOct;
+      const exact = Math.floor((midi - rootBase) / 12);
+      return Math.max(OCTAVE_MIN, Math.min(OCTAVE_MAX, exact));
+    };
+
+    const notes = melody.map(([beat, len, midi]) => ({
+      beat,
+      timeMs: beat * beatMs,
+      durMs: len * beatMs,
+      midi,
+    })).sort((a, b) => a.timeMs - b.timeMs);
+
+    const schedule = [];
+    let currentOct = tune.octave;
+    let lastSwitchMs = -9999;
+
+    for (let i = 0; i < notes.length; i++) {
+      const n = notes[i];
+      if (n.timeMs - lastSwitchMs < 1200) continue; // hold octave for at least 1.2s
+
+      if (!isNoteInOct(n.midi, currentOct)) {
+        const candidateOct = getBestOct(n.midi, currentOct);
+        const windowMs = Math.max(1200, 3 * beatMs);
+        const windowEnd = n.timeMs + windowMs;
+        const futureNotes = notes.filter((fn) => fn.timeMs >= n.timeMs && fn.timeMs < windowEnd);
+
+        const outsideNotes = futureNotes.filter((fn) => !isNoteInOct(fn.midi, currentOct) && isNoteInOct(fn.midi, candidateOct));
+        const outsideDur = outsideNotes.reduce((sum, fn) => sum + fn.durMs, 0);
+
+        let candidateDur = 0;
+        let currentDur = 0;
+        let totalDur = 0;
+        futureNotes.forEach((fn) => {
+          totalDur += fn.durMs;
+          if (isNoteInOct(fn.midi, candidateOct)) candidateDur += fn.durMs;
+          if (isNoteInOct(fn.midi, currentOct)) currentDur += fn.durMs;
+        });
+
+        if (candidateDur / totalDur >= 0.55 && candidateDur > currentDur && outsideDur >= 350 && (outsideNotes.length >= 2 || outsideDur >= 700)) {
+          schedule.push({ beat: n.beat, timeMs: n.timeMs, to: candidateOct });
+          currentOct = candidateOct;
+          lastSwitchMs = n.timeMs;
+        }
+      }
+    }
+    return schedule;
+  }
+
   // One time in ten, the song is a famous tune instead, taken in turn from TUNES (starting at a random
   // one): key, scale and octave are set to suit it and the melody, chords and bass are played from
   // a transcription (10 to 17 seconds)
@@ -528,12 +604,20 @@ export function initEModeSynth() {
     jamPlaying = true;
     if (rackZ) rackZ.classList.add('jamming');
     const beatMs = 60000 / tune.bpm;
-    const keys = [...container.querySelectorAll('.synth-key')];
+
+    // Schedule intelligent octave transitions so displayed octave tracks musical phrases
+    const octaveSched = computeOctaveSchedule(tune);
+    octaveSched.forEach((shift) => {
+      jamTimeouts.push(setTimeout(() => {
+        setOctave(shift.to);
+      }, shift.timeMs));
+    });
+
     const layer = (notes, lift) => notes.forEach(([beat, len, midi]) => {
       const note = midi + lift;
       const id = 'jam-' + jamSeq++;
-      const el = keys.find((k) => parseInt(k.getAttribute('data-midi'), 10) === note) || null;
       jamTimeouts.push(setTimeout(() => {
+        const el = container ? container.querySelector(`.synth-key[data-midi="${note}"]`) : null;
         startNoteVoice(id, 440 * Math.pow(2, (note - 69) / 12), el);
         jamVoiceIds.push(id);
         jamTimeouts.push(setTimeout(() => stopNoteVoice(id), Math.max(60, len * beatMs * 0.92)));
@@ -546,17 +630,19 @@ export function initEModeSynth() {
 
     // Whatever the transcription ends on, close with a ringing tonic chord and a low root
     const mode = MODES[tune.mode];
-    const rootMidi = state.rootMidi;
     const closeMs = end * beatMs + 60;
-    [[mode.intervals[0], 0], [mode.intervals[2], 0], [mode.intervals[4], 0], [mode.intervals[0], -12], [mode.intervals[0], 12]].forEach(([iv, shift]) => {
-      const id = 'jam-' + jamSeq++;
-      const midi = rootMidi + iv + shift;
-      jamTimeouts.push(setTimeout(() => {
-        startNoteVoice(id, 440 * Math.pow(2, (midi - 69) / 12), null);
+    jamTimeouts.push(setTimeout(() => {
+      setOctave(tune.octave);
+      const rootMidi = rootMidiFor(tune.root);
+      [[mode.intervals[0], 0], [mode.intervals[2], 0], [mode.intervals[4], 0], [mode.intervals[0], -12], [mode.intervals[0], 12]].forEach(([iv, shift]) => {
+        const id = 'jam-' + jamSeq++;
+        const midi = rootMidi + iv + shift;
+        const el = container ? container.querySelector(`.synth-key[data-midi="${midi}"]`) : null;
+        startNoteVoice(id, 440 * Math.pow(2, (midi - 69) / 12), el);
         jamVoiceIds.push(id);
         jamTimeouts.push(setTimeout(() => stopNoteVoice(id), 1700));
-      }, closeMs));
-    });
+      });
+    }, closeMs));
     jamBarTimers.push(setTimeout(endSong, closeMs + 1700 + 300));
     surpriseProgress(closeMs + 1700 + 300);
   }
@@ -582,8 +668,7 @@ export function initEModeSynth() {
     jamPlaying = true;
     for (let bar = 0; bar < JAM_BARS; bar++) {
       jamBarTimers.push(setTimeout(() => {
-        if (bar > 0) setOctave(jamStyle.octaves[bar]);
-        jamPhrase(bar);
+        jamPhrase(bar, home);
       }, bar * JAM_BAR_MS));
     }
     // Let the last chord ring, then stop
@@ -591,7 +676,7 @@ export function initEModeSynth() {
     surpriseProgress(JAM_BARS * JAM_BAR_MS + 300);
   }
   const rackZHit = document.querySelector('.rack-z-hit') || rackZ;
-  // Tap the Z seven times in quick succession to open a list of the tunes and pick one
+  // Tap the Z five times in quick succession to open a list of the tunes and pick one
   const tuneMenu = document.createElement('div');
   tuneMenu.className = 'tune-menu';
   tuneMenu.setAttribute('role', 'menu');
@@ -626,7 +711,7 @@ export function initEModeSynth() {
       if (!tuneMenu.hidden) return; // the list stays up until a tune is picked
       clearTimeout(zTapTimer);
       zTaps++;
-      if (zTaps >= 7) {
+      if (zTaps >= 5) {
         zTaps = 0;
         openTuneMenu();
         return;

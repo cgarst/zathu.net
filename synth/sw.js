@@ -14,6 +14,7 @@ const PRECACHE = [
   '/js/synth/template.js',
   '/js/synth/scope.js',
   '/js/synth/keys.js',
+  '/js/synth/chorus.js',
   '/js/synth/controls.js',
   '/js/synth/voices.js',
   '/js/synth/ribbon.js',
